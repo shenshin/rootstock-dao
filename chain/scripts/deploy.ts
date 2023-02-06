@@ -1,25 +1,33 @@
-import { ethers } from 'hardhat';
+import hre from 'hardhat';
+
+const rifAddresses: Record<string, string> = {
+  rsktestnet: '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE',
+  rskmainnet: '0x2acc95758f8b5f583470ba265eb685a8f45fc9d5',
+};
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
-
-  const lockedAmount = ethers.utils.parseEther('1');
-
-  const Lock = await ethers.getContractFactory('Lock');
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
-
-  console.log(
-    `Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`,
-  );
+  try {
+    const rifAddress = rifAddresses[hre.network.name]?.toLowerCase();
+    if (!rifAddress)
+      throw new Error(`RIF is not deployed at ${hre.network.name}`);
+    const VoteTokenFactory = await hre.ethers.getContractFactory('VoteToken');
+    const voteToken = await VoteTokenFactory.deploy(rifAddress);
+    await voteToken.deployed();
+    console.log(
+      `VoteToken was deployed at ${hre.network.name} with address ${voteToken.address}`,
+    );
+    const GovernorFactory = await hre.ethers.getContractFactory(
+      'RootstockGovernor',
+    );
+    const rootstockGovernor = await GovernorFactory.deploy(voteToken.address);
+    await rootstockGovernor.deployed();
+    console.log(
+      `RootstockGovernor was deployed at ${hre.network.name} with address ${rootstockGovernor.address}`,
+    );
+    process.exit(0);
+  } catch (error) {
+    console.log(error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
 }
-
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main();
