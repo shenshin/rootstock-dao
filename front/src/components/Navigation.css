@@ -1,0 +1,7 @@
+.nav-bar {
+  padding: 0 1rem;
+}
+
+.nav-bar .active {
+  text-decoration: underline;
+}
