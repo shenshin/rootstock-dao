@@ -1,50 +1,40 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol';
+import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol';
+import '@openzeppelin/contracts/token/ERC721/extensions/draft-ERC721Votes.sol';
+import '@openzeppelin/contracts/utils/Counters.sol';
 
-contract VoteToken is ERC20, ERC20Permit, ERC20Votes, ERC20Wrapper {
-  constructor(
-    IERC20 _wrappedToken
-  )
-    ERC20('VoteToken', 'VT')
-    ERC20Permit('VoteToken')
-    ERC20Wrapper(_wrappedToken)
-  {}
+contract VoteToken is ERC721, Ownable, EIP712, ERC721Votes {
+  using Counters for Counters.Counter;
 
-  // The functions below are overrides required by Solidity.
+  Counters.Counter private _tokenIdCounter;
+
+  constructor() ERC721('VoteToken', 'VT') EIP712('VoteToken', '1') {}
+
+  function safeMint(address to) public onlyOwner {
+    uint256 tokenId = _tokenIdCounter.current();
+    _tokenIdCounter.increment();
+    _safeMint(to, tokenId);
+  }
+
+  function safeMintBatch(address[] calldata to) public onlyOwner {
+    require(to.length <= 40, 'Too many addresses');
+    for (uint256 i; i < to.length; i++) {
+      safeMint(to[i]);
+    }
+  }
+
+  // The following functions are overrides required by Solidity.
 
   function _afterTokenTransfer(
     address from,
     address to,
-    uint256 amount
-  ) internal override(ERC20, ERC20Votes) {
-    super._afterTokenTransfer(from, to, amount);
-  }
-
-  function _mint(
-    address to,
-    uint256 amount
-  ) internal override(ERC20, ERC20Votes) {
-    super._mint(to, amount);
-  }
-
-  function _burn(
-    address account,
-    uint256 amount
-  ) internal override(ERC20, ERC20Votes) {
-    super._burn(account, amount);
-  }
-
-  function decimals()
-    public
-    view
-    override(ERC20, ERC20Wrapper)
-    returns (uint8)
-  {
-    return super.decimals();
+    uint256 tokenId,
+    uint256 batchSize
+  ) internal override(ERC721, ERC721Votes) {
+    super._afterTokenTransfer(from, to, tokenId, batchSize);
   }
 }

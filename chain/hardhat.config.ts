@@ -32,6 +32,13 @@ const config: HardhatUserConfig = {
       url: 'https://public-node.testnet.rsk.co/',
       accounts,
     },
+    goerli: {
+      url: `https://eth-goerli.g.alchemy.com/v2/YMsB0__NR71E9X257R_OMKsv7JTK_wkf`,
+      chainId: 5,
+      accounts: {
+        mnemonic,
+      },
+    },
   },
 };
 

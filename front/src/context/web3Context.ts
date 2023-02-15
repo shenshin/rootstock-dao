@@ -5,6 +5,7 @@ export interface IWeb3Context {
   address?: string;
   provider?: providers.Web3Provider;
   connect?: () => Promise<void>;
+  chainError?: string;
 }
 
 export const Web3Context = createContext<IWeb3Context>({});

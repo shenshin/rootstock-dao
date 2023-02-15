@@ -8,6 +8,7 @@ interface Web3ProviderProps {
 function Web3Provider({ children }: Web3ProviderProps) {
   const [provider, setProvider] = useState<ethers.providers.Web3Provider>();
   const [address, setAddress] = useState<string>('');
+  const [chainError, setChainError] = useState<string>('');
 
   const connect = async () => {
     try {
@@ -22,14 +23,14 @@ function Web3Provider({ children }: Web3ProviderProps) {
       setProvider(ethersProvider);
       setAddress(walletAddress);
     } catch (error) {
-      // you can implement error handling
-      console.error(error);
+      if (error instanceof Error) setChainError(error.message);
     }
   };
   const contextValue: IWeb3Context = {
     address,
     provider,
     connect,
+    chainError,
   };
   return (
     <Web3Context.Provider value={contextValue}>{children}</Web3Context.Provider>

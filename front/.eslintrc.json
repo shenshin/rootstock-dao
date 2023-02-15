@@ -29,7 +29,6 @@
     "react/jsx-props-no-spreading": "warn",
     "react/no-unescaped-entities": "off",
     "react/jsx-no-constructed-context-values": "off",
-    "no-console": "off",
     "import/no-named-as-default": "off"
   }
 }
