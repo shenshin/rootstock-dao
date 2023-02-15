@@ -1,0 +1,7 @@
+.proposal-param {
+  display: block;
+}
+input[type=text] {
+  width: 15rem;
+  font-size: 0.6rem;
+}

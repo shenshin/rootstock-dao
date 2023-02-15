@@ -3,7 +3,11 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import Web3Context from './context/web3Context';
 import Navigation from './components/Navigation';
 import Connect from './components/Connect';
-import Enfranchisement from './components/Enfranchisement';
+import Delegate from './components/Delegate';
+import Propose from './components/Propose';
+import Vote from './components/Vote';
+import State from './components/State';
+import Execute from './components/Execute';
 import './App.css';
 
 function App() {
@@ -20,8 +24,12 @@ function App() {
     <div className="app-container">
       <Navigation />
       <Routes>
-        <Route path="*" element={<Navigate to="enfranchisement" />} />
-        <Route path="enfranchisement" element={<Enfranchisement />} />
+        <Route path="*" element={<Navigate to="propose" />} />
+        <Route path="delegate" element={<Delegate />} />
+        <Route path="propose" element={<Propose />} />
+        <Route path="vote" element={<Vote />} />
+        <Route path="state" element={<State />} />
+        <Route path="execute" element={<Execute />} />
       </Routes>
     </div>
   );

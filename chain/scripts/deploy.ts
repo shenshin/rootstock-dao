@@ -1,21 +1,24 @@
 import hre from 'hardhat';
 
-const rifAddresses: Record<string, string> = {
-  rsktestnet: '0x19f64674D8a5b4e652319F5e239EFd3bc969a1FE',
-  rskmainnet: '0x2acc95758f8b5f583470ba265eb685a8f45fc9d5',
-};
-
 async function main() {
   try {
-    const rifAddress = rifAddresses[hre.network.name]?.toLowerCase();
-    if (!rifAddress)
-      throw new Error(`RIF is not deployed at ${hre.network.name}`);
+    // deploy VoteToken NFT smart contract
     const VoteTokenFactory = await hre.ethers.getContractFactory('VoteToken');
-    const voteToken = await VoteTokenFactory.deploy(rifAddress);
+    const voteToken = await VoteTokenFactory.deploy();
     await voteToken.deployed();
     console.log(
       `VoteToken was deployed at ${hre.network.name} with address ${voteToken.address}`,
     );
+    // mint some NFTs
+    const signers = await hre.ethers.getSigners();
+    const tx = await voteToken.safeMintBatch(signers.map((s) => s.address));
+    const receipt = await tx.wait();
+    console.log(`Minted VoteToke NFTs to addresses:`);
+    receipt.events?.forEach((event) => {
+      if ('tokenId' in event.args!)
+        console.log(`ID # ${event.args.tokenId}, to: ${event.args.to}`);
+    });
+    // deploy RootstockGovernor
     const GovernorFactory = await hre.ethers.getContractFactory(
       'RootstockGovernor',
     );
@@ -24,9 +27,20 @@ async function main() {
     console.log(
       `RootstockGovernor was deployed at ${hre.network.name} with address ${rootstockGovernor.address}`,
     );
+    // Send some RBTC to Governor treasury for proposal execution testing
+    const amount = '0.00001';
+    const transferTx = await signers[0].sendTransaction({
+      to: rootstockGovernor.address,
+      value: hre.ethers.utils.parseEther(amount),
+    });
+    await transferTx.wait();
+    const bal = hre.ethers.utils.formatEther(
+      await hre.ethers.provider.getBalance(rootstockGovernor.address),
+    );
+    console.log(`Sent ${bal} RBTC to RootstockGovernor`);
     process.exit(0);
   } catch (error) {
-    console.log(error instanceof Error ? error.message : error);
+    console.error(error);
     process.exit(1);
   }
 }

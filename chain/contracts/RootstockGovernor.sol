@@ -15,11 +15,11 @@ contract RootstockGovernor is
   GovernorVotesQuorumFraction
 {
   constructor(
-    IVotes _voteToken
+    IVotes _token
   )
     Governor('RootstockGovernor')
-    GovernorSettings(1 /* 1 block */, 50400 /* 1 week */, 0)
-    GovernorVotes(_voteToken)
+    GovernorSettings(1 /* 1 block */, 10 /* 5 minutes */, 0)
+    GovernorVotes(_token)
     GovernorVotesQuorumFraction(4)
   {}
 
