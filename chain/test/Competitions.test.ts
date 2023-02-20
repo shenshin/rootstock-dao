@@ -3,7 +3,7 @@ import { BigNumberish, BytesLike, BigNumber } from 'ethers';
 import { mine } from '@nomicfoundation/hardhat-network-helpers';
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import { expect } from 'chai';
-import { RootstockGovernor, VoteToken, Competitions } from '../typechain-types';
+import { GovernorBallot, VoteToken, Competitions } from '../typechain-types';
 
 type Proposal = [string[], BigNumberish[], BytesLike[], string];
 
@@ -35,7 +35,7 @@ enum ProposalState {
 }
 
 describe('Governor', () => {
-  let governor: RootstockGovernor;
+  let governor: GovernorBallot;
   let voteToken: VoteToken;
   let proposal: Proposal;
   let competitions: Competitions;
@@ -52,7 +52,7 @@ describe('Governor', () => {
     const mintTx = await voteToken.safeMintBatch(signers.map((s) => s.address));
     await mintTx.wait();
     // deploy Governor
-    const GovFactory = await hre.ethers.getContractFactory('RootstockGovernor');
+    const GovFactory = await hre.ethers.getContractFactory('GovernorBallot');
     governor = await GovFactory.deploy(voteToken.address);
     await governor.deployed();
     signers[0].sendTransaction({
@@ -95,7 +95,7 @@ describe('Governor', () => {
     const proposalId = getProposalId(proposal);
     teams = (await hre.ethers.getSigners()).slice(1, 6).map((s) => s.address);
     // start the competition
-    const tx = await competitions.startCompetition(teams, description);
+    const tx = await competitions.startCompetition(teams, description, 3);
     /* 
     ProposalCreated event signature:
     ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 startBlock, uint256 endBlock, string description)

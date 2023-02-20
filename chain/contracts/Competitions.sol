@@ -4,8 +4,7 @@ pragma solidity ^0.8.9;
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
-import './RootstockGovernor.sol';
-import 'hardhat/console.sol';
+import './GovernorBallot.sol';
 
 contract Competitions is ERC721, Ownable {
   using Counters for Counters.Counter;
@@ -18,6 +17,7 @@ contract Competitions is ERC721, Ownable {
   struct Competition {
     address[] teams;
     uint256 proposalId;
+    uint8 winPlaces;
   }
   // competitions are identified by description hash: descHash => Competition
   mapping(bytes32 => Competition) public competitions;
@@ -25,6 +25,13 @@ contract Competitions is ERC721, Ownable {
   /* 
   Competition winners are getting NFTs with unique numbers (1, 2, 3...)
   with information about the competition and place they took
+  - team address
+- competition id (uint)
+- competition name (string)
+- position/ rank (uint)
+
+startCompetition adds new argument for X, where X is the number of teams that can win
+limit max allowed teams to 32 or 16 (depending on whether it runs out of gas in the sort)
    */
   struct Prize {
     bytes32 competition;
@@ -32,16 +39,16 @@ contract Competitions is ERC721, Ownable {
   }
   mapping(uint256 => Prize) public prizes;
 
-  RootstockGovernor public immutable governor;
+  GovernorBallot public immutable governor;
 
-  constructor(RootstockGovernor _governor) ERC721('Meow token', 'MEO') {
+  constructor(GovernorBallot _governor) ERC721('Meow token', 'MEO') {
     governor = _governor;
   }
 
   modifier onlyGovernor() {
     require(
       msg.sender == address(governor),
-      'Can be called only by the RootstockGovernor'
+      'Can be called only by the GovernorBallot'
     );
     _;
   }
@@ -49,7 +56,8 @@ contract Competitions is ERC721, Ownable {
   // initiates voting
   function startCompetition(
     address[] calldata _teamAddresses,
-    string calldata _description
+    string calldata _description,
+    uint8 _winPlaces
   ) external onlyOwner {
     require(
       _teamAddresses.length > 1 && _teamAddresses.length <= 250,
@@ -64,6 +72,7 @@ contract Competitions is ERC721, Ownable {
     );
     newCompetition.teams = _teamAddresses;
     newCompetition.proposalId = createProposal(_description);
+    newCompetition.winPlaces = _winPlaces;
   }
 
   // creates a proposal on the governor
@@ -93,8 +102,8 @@ contract Competitions is ERC721, Ownable {
         votingResult: governor.proposalVotes(competition.proposalId, i + 1)
       });
     }
-    // mint to the 3 first places
-    awardWinners(_descriptionHash, sortTeams(teams), 3);
+    // mint to the winning places
+    awardWinners(_descriptionHash, sortTeams(teams), competition.winPlaces);
   }
 
   // NFTs can only be minted to the winners
@@ -102,7 +111,7 @@ contract Competitions is ERC721, Ownable {
   function awardWinners(
     bytes32 competition,
     Team[] memory sortedTeams,
-    uint8 threshold
+    uint8 winPlaces
   ) private {
     uint8 place; // 1st, 2nd, 3rd ... places
     uint256 prevResult; // previous team voting result
@@ -113,7 +122,7 @@ contract Competitions is ERC721, Ownable {
         place++; // proceed to the next place group
       }
       // mint only until the threshold is reached (placeNum <= 3)
-      if (place > threshold) return;
+      if (place > winPlaces) return;
       givePrize(competition, sortedTeams[i].addr, place);
     }
   }

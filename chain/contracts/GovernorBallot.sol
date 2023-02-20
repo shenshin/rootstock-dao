@@ -2,70 +2,64 @@
 pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/governance/Governor.sol';
+import '@openzeppelin/contracts/governance/extensions/GovernorSettings.sol';
+import './GovernorCountingBallot.sol';
+import '@openzeppelin/contracts/governance/extensions/GovernorVotes.sol';
+import '@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol';
 
-abstract contract GovernorBallot is Governor {
-  struct ProposalVote {
-    uint256 totalVotes;
-    mapping(uint8 => uint256) candidateVotes;
-    mapping(address => bool) hasVoted;
-  }
+contract GovernorBallot is
+  Governor,
+  GovernorSettings,
+  GovernorCountingBallot,
+  GovernorVotes,
+  GovernorVotesQuorumFraction
+{
+  constructor(
+    IVotes _token
+  )
+    Governor('GovernorBallot')
+    GovernorSettings(1 /* 1 block */, 20 /* 10 minutes */, 0)
+    GovernorVotes(_token)
+    GovernorVotesQuorumFraction(4)
+  {}
 
-  mapping(uint256 => ProposalVote) private _proposalVotes;
+  // The following functions are overrides required by Solidity.
 
-  function COUNTING_MODE()
+  function votingDelay()
     public
-    pure
-    virtual
-    override
-    returns (string memory)
+    view
+    override(IGovernor, GovernorSettings)
+    returns (uint256)
   {
-    return 'Rootstock-ballot';
+    return super.votingDelay();
   }
 
-  function hasVoted(
-    uint256 proposalId,
-    address account
-  ) public view virtual override returns (bool) {
-    return _proposalVotes[proposalId].hasVoted[account];
+  function votingPeriod()
+    public
+    view
+    override(IGovernor, GovernorSettings)
+    returns (uint256)
+  {
+    return super.votingPeriod();
   }
 
-  function proposalVotes(
-    uint256 proposalId,
-    uint8 candidate
-  ) public view virtual returns (uint256 candidateVotes) {
-    return _proposalVotes[proposalId].candidateVotes[candidate];
+  function quorum(
+    uint256 blockNumber
+  )
+    public
+    view
+    override(IGovernor, GovernorVotesQuorumFraction)
+    returns (uint256)
+  {
+    return super.quorum(blockNumber);
   }
 
-  function _quorumReached(
-    uint256 proposalId
-  ) internal view virtual override returns (bool) {
-    return
-      quorum(proposalSnapshot(proposalId)) <=
-      _proposalVotes[proposalId].totalVotes;
-  }
-
-  /* Voting is assumed successful if the quorum is reached */
-  function _voteSucceeded(
-    uint256 proposalId
-  ) internal view virtual override returns (bool) {
-    return _quorumReached(proposalId);
-  }
-
-  function _countVote(
-    uint256 proposalId,
-    address account,
-    uint8 support,
-    uint256 weight,
-    bytes memory // params
-  ) internal virtual override {
-    ProposalVote storage proposalVote = _proposalVotes[proposalId];
-
-    require(
-      !proposalVote.hasVoted[account],
-      'GovernorBallot: vote already cast'
-    );
-    proposalVote.hasVoted[account] = true;
-    proposalVote.totalVotes += weight;
-    proposalVote.candidateVotes[support] += weight;
+  function proposalThreshold()
+    public
+    view
+    override(Governor, GovernorSettings)
+    returns (uint256)
+  {
+    return super.proposalThreshold();
   }
 }
