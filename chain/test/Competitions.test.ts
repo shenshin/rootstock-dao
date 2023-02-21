@@ -97,7 +97,6 @@ describe('Governor', () => {
 
   it('should start the competition', async () => {
     competitionName = 'Competition 1';
-    const ranks = 3;
     const descHash = hre.ethers.utils.solidityKeccak256(
       ['string'],
       [competitionName],
@@ -111,11 +110,7 @@ describe('Governor', () => {
     const proposalId = getProposalId(proposal);
     teams = (await hre.ethers.getSigners()).slice(1, 6).map((s) => s.address);
     // start the competition
-    const tx = await competitions.startCompetition(
-      teams,
-      competitionName,
-      ranks,
-    );
+    const tx = await competitions.startCompetition(teams, competitionName);
     /* 
     ProposalCreated event signature:
     ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 startBlock, uint256 endBlock, string description)
@@ -204,28 +199,26 @@ describe('Governor', () => {
     );
   });
 
-  it('winners should own minted NFTs', async () => {
-    expect(await awards.ownerOf(0)).to.equal(teams[5 - 1]);
-    expect(await awards.ownerOf(1)).to.equal(teams[2 - 1]);
-    expect(await awards.ownerOf(2)).to.equal(teams[1 - 1]);
-    expect(await awards.ownerOf(3)).to.equal(teams[3 - 1]);
-  });
-
-  it('NFTs shouls save info about the places taken in the competition', async () => {
-    const prize0 = await awards.prizes(0);
-    expect(prize0.competitionName).to.equal(competitionName);
-    expect(prize0.rank).to.equal(1);
-
-    const prize1 = await awards.prizes(1);
-    expect(prize1.competitionName).to.equal(competitionName);
-    expect(prize1.rank).to.equal(2);
-
-    const prize2 = await awards.prizes(2);
-    expect(prize2.competitionName).to.equal(competitionName);
-    expect(prize2.rank).to.equal(3);
-
-    const prize3 = await awards.prizes(3);
-    expect(prize3.competitionName).to.equal(competitionName);
-    expect(prize3.rank).to.equal(3);
+  it('teams should receive their minted NFTs', async () => {
+    const checkNftMint = async (
+      teamIndex: number,
+      rank: number,
+      votingResult: number,
+    ) => {
+      const index = teamIndex - 1;
+      const id = hre.ethers.utils.solidityKeccak256(
+        ['string', 'address', 'uint8'],
+        [competitionName, teams[index], rank],
+      );
+      expect(await awards.ownerOf(id)).to.equal(teams[index]);
+      const prize0 = await awards.prizes(id);
+      expect(prize0.competitionName).to.equal(competitionName);
+      expect(prize0.votingResult).to.equal(votingResult);
+      expect(prize0.rank).to.equal(rank);
+    };
+    await checkNftMint(5, 1, 4);
+    await checkNftMint(2, 2, 3);
+    await checkNftMint(1, 3, 2);
+    await checkNftMint(3, 3, 2);
   });
 });

@@ -8,10 +8,6 @@ import './Awards.sol';
 import 'hardhat/console.sol';
 
 contract Competitions is Ownable {
-  struct Team {
-    address addr;
-    uint256 votingResult;
-  }
   struct Competition {
     address[] teams; // participants
     string name; // description
@@ -49,16 +45,13 @@ contract Competitions is Ownable {
       teams.length > 1 && teams.length <= 250,
       'Min 2, max 250 teams are allowed'
     );
-    Competition storage newCompetition = competitions[
+    Competition storage contest = competitions[
       keccak256(abi.encodePacked(name))
     ];
-    require(
-      newCompetition.teams.length == 0,
-      'Competition has already started'
-    );
-    newCompetition.teams = teams;
-    newCompetition.name = name;
-    newCompetition.proposalId = createProposal(name);
+    require(contest.teams.length == 0, 'Competition has already started');
+    contest.teams = teams;
+    contest.name = name;
+    contest.proposalId = createProposal(name);
   }
 
   // creates a proposal on the governor
@@ -77,40 +70,31 @@ contract Competitions is Ownable {
 
   // is called by the governor if voting reaches the quorum
   function endCompetition(bytes32 nameHash) external onlyGovernor {
-    Competition storage competition = competitions[nameHash];
-    Team[] memory teams = new Team[](competition.teams.length);
-    // fill teams with voting results
-    for (uint8 i = 0; i < teams.length; i++) {
-      teams[i] = Team({
-        addr: competition.teams[i],
-        votingResult: governor.proposalVotes(competition.proposalId, i + 1)
-      });
-    }
-    awardWinners(competition.name, teams);
-  }
-
-  // give prizes to the teams with the highest ranks
-  function awardWinners(string memory name, Team[] memory teams) private {
-    (uint256 first, uint256 second, uint256 third) = findMaxVotes(teams);
-    for (uint i = 0; i < teams.length; i++) {
-      if (teams[i].votingResult == first)
-        awards.givePrize(name, teams[i].votingResult, teams[i].addr, 1);
-      else if (teams[i].votingResult == second)
-        awards.givePrize(name, teams[i].votingResult, teams[i].addr, 2);
-      else if (teams[i].votingResult == third)
-        awards.givePrize(name, teams[i].votingResult, teams[i].addr, 3);
+    Competition storage contest = competitions[nameHash];
+    (uint256 first, uint256 second, uint256 third) = findMaxVotes(
+      contest.proposalId,
+      contest.teams
+    );
+    for (uint8 i = 0; i < contest.teams.length; i++) {
+      uint256 votingResult = governor.proposalVotes(contest.proposalId, i + 1);
+      uint8 rank;
+      if (votingResult == first) rank = 1;
+      else if (votingResult == second) rank = 2;
+      else if (votingResult == third) rank = 3;
+      awards.givePrize(contest.name, votingResult, contest.teams[i], rank);
     }
   }
 
   // finds out how many votes the winning teams received
   function findMaxVotes(
-    Team[] memory teams
-  ) private pure returns (uint first, uint second, uint third) {
-    first = teams[0].votingResult;
+    uint256 proposalId,
+    address[] memory teams
+  ) private view returns (uint256 first, uint256 second, uint256 third) {
+    first = governor.proposalVotes(proposalId, 1);
     second = 0;
     third = 0;
-    for (uint i = 1; i < teams.length; i++) {
-      uint votingResult = teams[i].votingResult;
+    for (uint8 i = 1; i < teams.length; i++) {
+      uint votingResult = governor.proposalVotes(proposalId, i + 1);
       if (votingResult > first) {
         third = second;
         second = first;

@@ -2,13 +2,10 @@
 pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import '@openzeppelin/contracts/utils/Counters.sol';
 import './Competitions.sol';
+import 'hardhat/console.sol';
 
 contract Awards is ERC721 {
-  using Counters for Counters.Counter;
-  Counters.Counter private _tokenIdCounter;
-
   struct Prize {
     string competitionName;
     uint256 votingResult;
@@ -37,8 +34,10 @@ contract Awards is ERC721 {
     address to,
     uint8 rank
   ) external onlyCompetitions {
-    uint256 tokenId = _tokenIdCounter.current();
-    _tokenIdCounter.increment();
+    // calculating a unique token ID
+    uint256 tokenId = uint256(
+      keccak256(abi.encodePacked(competitionName, to, rank))
+    );
     _safeMint(to, tokenId);
     prizes[tokenId] = Prize({
       competitionName: competitionName,
