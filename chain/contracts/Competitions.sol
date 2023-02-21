@@ -2,46 +2,28 @@
 pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import '@openzeppelin/contracts/utils/Counters.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import './GovernorBallot.sol';
+import './Awards.sol';
+import 'hardhat/console.sol';
 
-contract Competitions is ERC721, Ownable {
-  using Counters for Counters.Counter;
-  Counters.Counter private _tokenIdCounter;
-
+contract Competitions is Ownable {
   struct Team {
     address addr;
     uint256 votingResult;
   }
   struct Competition {
-    address[] teams;
-    uint256 proposalId;
-    uint8 winPlaces;
+    address[] teams; // participants
+    string name; // description
+    uint256 proposalId; // corresponding proposal on the Governor
   }
-  // competitions are identified by description hash: descHash => Competition
+  // competitions are identified by description hash
   mapping(bytes32 => Competition) public competitions;
 
-  /* 
-  Competition winners are getting NFTs with unique numbers (1, 2, 3...)
-  with information about the competition and place they took
-  - team address
-- competition id (uint)
-- competition name (string)
-- position/ rank (uint)
-
-startCompetition adds new argument for X, where X is the number of teams that can win
-limit max allowed teams to 32 or 16 (depending on whether it runs out of gas in the sort)
-   */
-  struct Prize {
-    bytes32 competition;
-    uint8 place;
-  }
-  mapping(uint256 => Prize) public prizes;
-
   GovernorBallot public immutable governor;
+  Awards public awards; // prizes NFT s/c
 
-  constructor(GovernorBallot _governor) ERC721('Meow token', 'MEO') {
+  constructor(GovernorBallot _governor) {
     governor = _governor;
   }
 
@@ -53,32 +35,34 @@ limit max allowed teams to 32 or 16 (depending on whether it runs out of gas in 
     _;
   }
 
+  // sets an address of NFT s/c which mints prizes
+  function setAwards(Awards _awards) external onlyOwner {
+    awards = _awards;
+  }
+
   // initiates voting
   function startCompetition(
-    address[] calldata _teamAddresses,
-    string calldata _description,
-    uint8 _winPlaces
+    address[] calldata teams,
+    string calldata name
   ) external onlyOwner {
     require(
-      _teamAddresses.length > 1 && _teamAddresses.length <= 250,
+      teams.length > 1 && teams.length <= 250,
       'Min 2, max 250 teams are allowed'
     );
     Competition storage newCompetition = competitions[
-      keccak256(abi.encodePacked(_description))
+      keccak256(abi.encodePacked(name))
     ];
     require(
       newCompetition.teams.length == 0,
       'Competition has already started'
     );
-    newCompetition.teams = _teamAddresses;
-    newCompetition.proposalId = createProposal(_description);
-    newCompetition.winPlaces = _winPlaces;
+    newCompetition.teams = teams;
+    newCompetition.name = name;
+    newCompetition.proposalId = createProposal(name);
   }
 
   // creates a proposal on the governor
-  function createProposal(
-    string calldata _description
-  ) private returns (uint256) {
+  function createProposal(string calldata name) private returns (uint256) {
     address[] memory targets = new address[](1);
     targets[0] = address(this);
     uint256[] memory amounts = new uint256[](1);
@@ -86,14 +70,14 @@ limit max allowed teams to 32 or 16 (depending on whether it runs out of gas in 
     bytes[] memory calldatas = new bytes[](1);
     calldatas[0] = abi.encodeWithSelector(
       this.endCompetition.selector,
-      keccak256(abi.encodePacked(_description))
+      keccak256(abi.encodePacked(name))
     );
-    return governor.propose(targets, amounts, calldatas, _description);
+    return governor.propose(targets, amounts, calldatas, name);
   }
 
   // is called by the governor if voting reaches the quorum
-  function endCompetition(bytes32 _descriptionHash) external onlyGovernor {
-    Competition storage competition = competitions[_descriptionHash];
+  function endCompetition(bytes32 nameHash) external onlyGovernor {
+    Competition storage competition = competitions[nameHash];
     Team[] memory teams = new Team[](competition.teams.length);
     // fill teams with voting results
     for (uint8 i = 0; i < teams.length; i++) {
@@ -102,51 +86,42 @@ limit max allowed teams to 32 or 16 (depending on whether it runs out of gas in 
         votingResult: governor.proposalVotes(competition.proposalId, i + 1)
       });
     }
-    // mint to the winning places
-    awardWinners(_descriptionHash, sortTeams(teams), competition.winPlaces);
+    awardWinners(competition.name, teams);
   }
 
-  // NFTs can only be minted to the winners
-  // give prizes to the teams with voting results below `threshold` (1st - 3rd places)
-  function awardWinners(
-    bytes32 competition,
-    Team[] memory sortedTeams,
-    uint8 winPlaces
-  ) private {
-    uint8 place; // 1st, 2nd, 3rd ... places
-    uint256 prevResult; // previous team voting result
-    for (uint8 i = 0; i < sortedTeams.length; i++) {
-      if (sortedTeams[i].votingResult == 0) return; // don't mint without any votes
-      if (sortedTeams[i].votingResult != prevResult) {
-        prevResult = sortedTeams[i].votingResult; // save current result
-        place++; // proceed to the next place group
-      }
-      // mint only until the threshold is reached (placeNum <= 3)
-      if (place > winPlaces) return;
-      givePrize(competition, sortedTeams[i].addr, place);
+  // give prizes to the teams with the highest ranks
+  function awardWinners(string memory name, Team[] memory teams) private {
+    (uint256 first, uint256 second, uint256 third) = findMaxVotes(teams);
+    for (uint i = 0; i < teams.length; i++) {
+      if (teams[i].votingResult == first)
+        awards.givePrize(name, teams[i].votingResult, teams[i].addr, 1);
+      else if (teams[i].votingResult == second)
+        awards.givePrize(name, teams[i].votingResult, teams[i].addr, 2);
+      else if (teams[i].votingResult == third)
+        awards.givePrize(name, teams[i].votingResult, teams[i].addr, 3);
     }
   }
 
-  // bubble sort teams by the voting results
-  function sortTeams(Team[] memory teams) private pure returns (Team[] memory) {
-    for (uint8 i = 0; i < teams.length - 1; i++) {
-      for (uint8 j = 0; j < teams.length - i - 1; j++) {
-        if (teams[j].votingResult < teams[j + 1].votingResult) {
-          Team memory temp = teams[j];
-          teams[j] = teams[j + 1];
-          teams[j + 1] = temp;
-        }
+  // finds out how many votes the winning teams received
+  function findMaxVotes(
+    Team[] memory teams
+  ) private pure returns (uint first, uint second, uint third) {
+    first = teams[0].votingResult;
+    second = 0;
+    third = 0;
+    for (uint i = 1; i < teams.length; i++) {
+      uint votingResult = teams[i].votingResult;
+      if (votingResult > first) {
+        third = second;
+        second = first;
+        first = votingResult;
+      } else if (votingResult > second) {
+        third = second;
+        second = votingResult;
+      } else if (votingResult > third) {
+        third = votingResult;
       }
     }
-    return teams;
-  }
-
-  // mints 1 NFT with unique number and saves info about the place taken
-  function givePrize(bytes32 competition, address to, uint8 place) private {
-    uint256 tokenId = _tokenIdCounter.current();
-    _tokenIdCounter.increment();
-    _safeMint(to, tokenId);
-    prizes[tokenId] = Prize({competition: competition, place: place});
   }
 
   receive() external payable {
