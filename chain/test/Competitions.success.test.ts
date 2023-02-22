@@ -1,46 +1,23 @@
 import hre from 'hardhat';
-import { BigNumberish, BytesLike, BigNumber } from 'ethers';
 import { mine } from '@nomicfoundation/hardhat-network-helpers';
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import { expect } from 'chai';
-import { GovernorBallot, VoteToken, Competitions } from '../typechain-types';
+import {
+  GovernorBallot,
+  VoteToken,
+  Competitions,
+  Awards,
+} from '../typechain-types';
+import { Proposal, ProposalState, getProposalId } from './util';
 
-type Proposal = [string[], BigNumberish[], BytesLike[], string];
-
-function getProposalId(proposal: Proposal): BigNumber {
-  const [addresses, amounts, calldatas, description] = proposal;
-  const descHash = hre.ethers.utils.solidityKeccak256(
-    ['string'],
-    [description],
-  );
-  return BigNumber.from(
-    hre.ethers.utils.keccak256(
-      hre.ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256[]', 'bytes[]', 'bytes32'],
-        [addresses, amounts, calldatas, descHash],
-      ),
-    ),
-  );
-}
-
-enum ProposalState {
-  Pending,
-  Active,
-  Canceled,
-  Defeated,
-  Succeeded,
-  Queued,
-  Expired,
-  Executed,
-}
-
-describe('Governor', () => {
+describe('Competitions happy path', () => {
   let governor: GovernorBallot;
   let voteToken: VoteToken;
   let proposal: Proposal;
   let competitions: Competitions;
+  let awards: Awards;
   let teams: string[];
-  let descHash: string;
+  let competitionName: string;
 
   const deploy = async () => {
     // deploy vote token
@@ -65,6 +42,12 @@ describe('Governor', () => {
     );
     competitions = await CompetitionsFactory.deploy(governor.address);
     await competitions.deployed();
+    // deploy Awards
+    const AwardsFactory = await hre.ethers.getContractFactory('Awards');
+    awards = await AwardsFactory.deploy(competitions.address);
+    // set Awards address on the Competitions
+    const setAwardstx = await competitions.setAwards(awards.address);
+    await setAwardstx.wait();
   };
 
   before(async () => {
@@ -84,18 +67,21 @@ describe('Governor', () => {
   });
 
   it('should start the competition', async () => {
-    const description = 'Competition 1';
-    descHash = hre.ethers.utils.solidityKeccak256(['string'], [description]);
+    competitionName = 'Competition 1';
+    const descHash = hre.ethers.utils.solidityKeccak256(
+      ['string'],
+      [competitionName],
+    );
 
     const callback = competitions.interface.encodeFunctionData(
       'endCompetition',
       [descHash],
     );
-    proposal = [[competitions.address], [0], [callback], description];
+    proposal = [[competitions.address], [0], [callback], competitionName];
     const proposalId = getProposalId(proposal);
     teams = (await hre.ethers.getSigners()).slice(1, 6).map((s) => s.address);
     // start the competition
-    const tx = await competitions.startCompetition(teams, description, 3);
+    const tx = await competitions.startCompetition(teams, competitionName);
     /* 
     ProposalCreated event signature:
     ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 startBlock, uint256 endBlock, string description)
@@ -111,7 +97,7 @@ describe('Governor', () => {
         [callback],
         anyValue,
         anyValue,
-        description,
+        competitionName,
       );
   });
 
@@ -165,43 +151,45 @@ describe('Governor', () => {
 
   it('should execute the proposal and mint NFTs to the winners', async () => {
     const [targets, values, calldatas] = proposal;
+    const descHash = hre.ethers.utils.solidityKeccak256(
+      ['string'],
+      [competitionName],
+    );
     const tx = await governor.execute(targets, values, calldatas, descHash);
     await expect(tx).to.emit(governor, 'ProposalExecuted');
-    await expect(tx).to.emit(competitions, 'Transfer');
+    await expect(tx).to.emit(awards, 'Transfer');
   });
 
   it('winners should top up their balances', async () => {
     await Promise.all(
       [teams[5 - 1], teams[2 - 1], teams[3 - 1], teams[1 - 1]].map(
         async (winner) => {
-          expect(await competitions.balanceOf(winner)).to.equal(1);
+          expect(await awards.balanceOf(winner)).to.equal(1);
         },
       ),
     );
   });
 
-  it('winners should own minted NFTs', async () => {
-    expect(await competitions.ownerOf(0)).to.equal(teams[5 - 1]);
-    expect(await competitions.ownerOf(1)).to.equal(teams[2 - 1]);
-    expect(await competitions.ownerOf(2)).to.equal(teams[1 - 1]);
-    expect(await competitions.ownerOf(3)).to.equal(teams[3 - 1]);
-  });
-
-  it('NFTs shouls save info about the places taken in the competition', async () => {
-    const prize0 = await competitions.prizes(0);
-    expect(prize0.competition).to.equal(descHash);
-    expect(prize0.place).to.equal(1);
-
-    const prize1 = await competitions.prizes(1);
-    expect(prize1.competition).to.equal(descHash);
-    expect(prize1.place).to.equal(2);
-
-    const prize2 = await competitions.prizes(2);
-    expect(prize2.competition).to.equal(descHash);
-    expect(prize2.place).to.equal(3);
-
-    const prize3 = await competitions.prizes(3);
-    expect(prize3.competition).to.equal(descHash);
-    expect(prize3.place).to.equal(3);
+  it('teams should receive their minted NFTs', async () => {
+    const checkNftMint = async (
+      teamIndex: number,
+      rank: number,
+      votingResult: number,
+    ) => {
+      const index = teamIndex - 1;
+      const id = hre.ethers.utils.solidityKeccak256(
+        ['string', 'address', 'uint8'],
+        [competitionName, teams[index], rank],
+      );
+      expect(await awards.ownerOf(id)).to.equal(teams[index]);
+      const prize0 = await awards.prizes(id);
+      expect(prize0.competitionName).to.equal(competitionName);
+      expect(prize0.votingResult).to.equal(votingResult);
+      expect(prize0.rank).to.equal(rank);
+    };
+    await checkNftMint(5, 1, 4);
+    await checkNftMint(2, 2, 3);
+    await checkNftMint(1, 3, 2);
+    await checkNftMint(3, 3, 2);
   });
 });
