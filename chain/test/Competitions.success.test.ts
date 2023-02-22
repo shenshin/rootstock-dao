@@ -1,5 +1,4 @@
 import hre from 'hardhat';
-import { BigNumberish, BytesLike, BigNumber } from 'ethers';
 import { mine } from '@nomicfoundation/hardhat-network-helpers';
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import { expect } from 'chai';
@@ -9,37 +8,9 @@ import {
   Competitions,
   Awards,
 } from '../typechain-types';
+import { Proposal, ProposalState, getProposalId } from './util';
 
-type Proposal = [string[], BigNumberish[], BytesLike[], string];
-
-function getProposalId(proposal: Proposal): BigNumber {
-  const [addresses, amounts, calldatas, description] = proposal;
-  const descHash = hre.ethers.utils.solidityKeccak256(
-    ['string'],
-    [description],
-  );
-  return BigNumber.from(
-    hre.ethers.utils.keccak256(
-      hre.ethers.utils.defaultAbiCoder.encode(
-        ['address[]', 'uint256[]', 'bytes[]', 'bytes32'],
-        [addresses, amounts, calldatas, descHash],
-      ),
-    ),
-  );
-}
-
-enum ProposalState {
-  Pending,
-  Active,
-  Canceled,
-  Defeated,
-  Succeeded,
-  Queued,
-  Expired,
-  Executed,
-}
-
-describe('Governor', () => {
+describe('Competitions happy path', () => {
   let governor: GovernorBallot;
   let voteToken: VoteToken;
   let proposal: Proposal;
