@@ -1,5 +1,5 @@
 import hre from 'hardhat';
-import { mine } from '@nomicfoundation/hardhat-network-helpers';
+import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import { expect } from 'chai';
 import {
@@ -8,7 +8,7 @@ import {
   Competitions,
   Awards,
 } from '../typechain-types';
-import { Proposal, ProposalState, getProposalId } from './util';
+import { Proposal, ProposalState, getProposalId, deploy } from './util';
 
 describe('Competitions happy path', () => {
   let governor: GovernorBallot;
@@ -19,39 +19,12 @@ describe('Competitions happy path', () => {
   let teams: string[];
   let competitionName: string;
 
-  const deploy = async () => {
-    // deploy vote token
-    const VTFactory = await hre.ethers.getContractFactory('VoteToken');
-    voteToken = await VTFactory.deploy();
-    await voteToken.deployed();
-    // mint NFTs
-    const signers = await hre.ethers.getSigners();
-    const mintTx = await voteToken.safeMintBatch(signers.map((s) => s.address));
-    await mintTx.wait();
-    // deploy Governor
-    const GovFactory = await hre.ethers.getContractFactory('GovernorBallot');
-    governor = await GovFactory.deploy(voteToken.address);
-    await governor.deployed();
-    signers[0].sendTransaction({
-      to: governor.address,
-      value: hre.ethers.utils.parseEther('1'),
-    });
-    // deploy Competitions
-    const CompetitionsFactory = await hre.ethers.getContractFactory(
-      'Competitions',
-    );
-    competitions = await CompetitionsFactory.deploy(governor.address);
-    await competitions.deployed();
-    // deploy Awards
-    const AwardsFactory = await hre.ethers.getContractFactory('Awards');
-    awards = await AwardsFactory.deploy(competitions.address);
-    // set Awards address on the Competitions
-    const setAwardstx = await competitions.setAwards(awards.address);
-    await setAwardstx.wait();
-  };
-
   before(async () => {
-    await deploy();
+    const contracts = await loadFixture(deploy);
+    governor = contracts.governor;
+    voteToken = contracts.voteToken;
+    competitions = contracts.competitions;
+    awards = contracts.awards;
   });
 
   it('should delegate voting power', async () => {

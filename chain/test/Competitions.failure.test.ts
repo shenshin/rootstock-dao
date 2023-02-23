@@ -69,7 +69,36 @@ describe('Competition error path', () => {
       await mine(50);
       const tx = competitions.endCompetition(competitionName);
       await expect(tx).to.be.revertedWith(
-        'Voting is still active or quorum was not reached',
+        'Proposal is not ready to be executed',
+      );
+    });
+
+    it('competition proposal cannot be executed twice', async () => {
+      const { competitions, signers, governor, voteToken } = await loadFixture(
+        deploy,
+      );
+      await voteToken.delegate(signers[0].address);
+      await competitions
+        .startCompetition(
+          signers.slice(1, 5).map((s) => s.address),
+          competitionName,
+        )
+        .then((tx) => tx.wait());
+      const propId = await competitions.getProposalId(competitionName);
+      await mine(2);
+      await governor.castVote(propId, 10).then((tx) => tx.wait());
+      await governor
+        .connect(signers[1])
+        .castVote(propId, 10)
+        .then((tx) => tx.wait());
+
+      await mine(20);
+      await competitions
+        .endCompetition(competitionName)
+        .then((tx) => tx.wait());
+      const secondExecution = competitions.endCompetition(competitionName);
+      await expect(secondExecution).to.be.revertedWith(
+        'Proposal is not ready to be executed',
       );
     });
   });
