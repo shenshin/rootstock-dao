@@ -105,7 +105,7 @@ contract Competitions is Ownable {
     Competition storage contest = competitions[nameHash];
     require(
       governor.state(contest.proposalId) == IGovernor.ProposalState.Succeeded,
-      'Voting is still active or quorum was not reached'
+      'Proposal is not ready to be executed'
     );
     (
       address[] memory targets,
