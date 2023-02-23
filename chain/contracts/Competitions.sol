@@ -8,6 +8,10 @@ import './Awards.sol';
 import 'hardhat/console.sol';
 
 contract Competitions is Ownable {
+  struct Team {
+    uint256 votes;
+    address addr;
+  }
   struct Competition {
     address[] teams; // participants
     string name; // description
@@ -71,41 +75,76 @@ contract Competitions is Ownable {
   // is called by the governor if voting reaches the quorum
   function endCompetition(bytes32 nameHash) external onlyGovernor {
     Competition storage contest = competitions[nameHash];
-    (uint256 first, uint256 second, uint256 third) = findMaxVotes(
-      contest.proposalId,
-      contest.teams
-    );
-    for (uint8 i = 0; i < contest.teams.length; i++) {
-      uint256 votingResult = governor.proposalVotes(contest.proposalId, i + 1);
-      uint8 rank;
-      if (votingResult == first) rank = 1;
-      else if (votingResult == second) rank = 2;
-      else if (votingResult == third) rank = 3;
-      awards.givePrize(contest.name, votingResult, contest.teams[i], rank);
+    Team[][] memory winners = findWinners(contest.proposalId, contest.teams);
+    // runs 3 times, iterates ranks
+    for (uint8 rank = 0; rank < winners.length; rank++) {
+      // runs as many times as there are teams in the same rank (1-few)
+      for (uint8 i = 0; i < winners[rank].length; i++) {
+        // mint NFTs
+        awards.givePrize(
+          contest.name,
+          winners[rank][i].votes,
+          winners[rank][i].addr,
+          rank + 1
+        );
+      }
     }
   }
 
-  // finds out how many votes the winning teams received
-  function findMaxVotes(
+  /* Finds winner teams.
+  Returns a result of a kind:
+  [
+    // 1 rank
+    [Team, Team],
+    // 2 rank
+    [Team],
+    // 3 rank
+    [Team, Team]
+  ]
+   */
+  function findWinners(
     uint256 proposalId,
     address[] memory teams
-  ) private view returns (uint256 first, uint256 second, uint256 third) {
-    first = governor.proposalVotes(proposalId, 1);
-    second = 0;
-    third = 0;
-    for (uint8 i = 1; i < teams.length; i++) {
-      uint votingResult = governor.proposalVotes(proposalId, i + 1);
-      if (votingResult > first) {
-        third = second;
-        second = first;
-        first = votingResult;
-      } else if (votingResult > second) {
-        third = second;
-        second = votingResult;
-      } else if (votingResult > third) {
-        third = votingResult;
+  ) private view returns (Team[][] memory winners) {
+    winners = new Team[][](3);
+    winners[0] = new Team[](1);
+    winners[1] = new Team[](1);
+    winners[2] = new Team[](1);
+    for (uint8 i = 0; i < teams.length; i++) {
+      Team memory team = Team({
+        addr: teams[i],
+        votes: governor.proposalVotes(proposalId, i + 1)
+      });
+      if (team.votes > winners[0][winners[0].length - 1].votes) {
+        winners[2] = winners[1];
+        winners[1] = winners[0];
+        winners[0] = new Team[](1);
+        winners[0][0] = team;
+      } else if (team.votes == winners[0][winners[0].length - 1].votes) {
+        winners[0] = push(winners[0], team);
+      } else if (team.votes > winners[1][winners[1].length - 1].votes) {
+        winners[2] = winners[1];
+        winners[1] = new Team[](1);
+        winners[1][0] = team;
+      } else if (team.votes == winners[1][winners[1].length - 1].votes) {
+        winners[1] = push(winners[1], team);
+      } else if (team.votes > winners[2][winners[2].length - 1].votes) {
+        winners[2] = new Team[](1);
+        winners[2][0] = team;
+      } else if (team.votes == winners[2][winners[2].length - 1].votes) {
+        winners[2] = push(winners[2], team);
       }
     }
+  }
+
+  // pushes an element (Team) to the end of Team[] array
+  function push(
+    Team[] memory arr,
+    Team memory team
+  ) private pure returns (Team[] memory newArr) {
+    newArr = new Team[](arr.length + 1);
+    for (uint8 i = 0; i < arr.length; i++) newArr[i] = arr[i];
+    newArr[arr.length] = team;
   }
 
   receive() external payable {
