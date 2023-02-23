@@ -72,9 +72,8 @@ describe('Competitions happy path', () => {
       ['string'],
       [competitionName],
     );
-
     const callback = competitions.interface.encodeFunctionData(
-      'endCompetition',
+      'onCompetitionEnd',
       [descHash],
     );
     proposal = [[competitions.address], [0], [callback], competitionName];
@@ -103,13 +102,13 @@ describe('Competitions happy path', () => {
 
   it('proposal should be active', async () => {
     await mine(2);
-    const propId = getProposalId(proposal);
+    const propId = await competitions.getProposalId(competitionName);
     const state = await governor.state(propId);
     expect(state).to.equal(ProposalState.Active);
   });
 
   it('voters should vote for different teams', async () => {
-    const propId = getProposalId(proposal);
+    const propId = await competitions.getProposalId(competitionName);
     const signers = await hre.ethers.getSigners();
     const vote = async (signerIndex: number, suppport: number) => {
       await expect(
@@ -134,13 +133,13 @@ describe('Competitions happy path', () => {
 
   it('proposal should be successful', async () => {
     await mine(20);
-    const propId = getProposalId(proposal);
+    const propId = await competitions.getProposalId(competitionName);
     const state = await governor.state(propId);
     expect(state).to.equal(ProposalState.Succeeded);
   });
 
   it('votes should be recorded correctly', async () => {
-    const propId = getProposalId(proposal);
+    const propId = await competitions.getProposalId(competitionName);
     expect(await governor.proposalVotes(propId, 0)).to.equal(0);
     expect(await governor.proposalVotes(propId, 1)).to.equal(2); // 3rd
     expect(await governor.proposalVotes(propId, 2)).to.equal(3); // 2nd
@@ -150,12 +149,7 @@ describe('Competitions happy path', () => {
   });
 
   it('should execute the proposal and mint NFTs to the winners', async () => {
-    const [targets, values, calldatas] = proposal;
-    const descHash = hre.ethers.utils.solidityKeccak256(
-      ['string'],
-      [competitionName],
-    );
-    const tx = await governor.execute(targets, values, calldatas, descHash);
+    const tx = await competitions.endCompetition(competitionName);
     await expect(tx).to.emit(governor, 'ProposalExecuted');
     await expect(tx).to.emit(awards, 'Transfer');
   });

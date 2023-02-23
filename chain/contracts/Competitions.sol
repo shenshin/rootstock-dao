@@ -40,7 +40,7 @@ contract Competitions is Ownable {
     awards = _awards;
   }
 
-  // initiates voting
+  // Initiates voting. Can be called only by the competition initiator.
   function startCompetition(
     address[] calldata teams,
     string calldata name
@@ -49,37 +49,81 @@ contract Competitions is Ownable {
       teams.length > 1 && teams.length <= 250,
       'Min 2, max 250 teams are allowed'
     );
-    Competition storage contest = competitions[
-      keccak256(abi.encodePacked(name))
-    ];
+    bytes32 nameHash = keccak256(abi.encodePacked(name));
+    Competition storage contest = competitions[nameHash];
     require(contest.teams.length == 0, 'Competition has already started');
     contest.teams = teams;
     contest.name = name;
-    contest.proposalId = createProposal(name);
+    (
+      address[] memory targets,
+      uint256[] memory amounts,
+      bytes[] memory calldatas
+    ) = getProposal(nameHash);
+    contest.proposalId = governor.propose(targets, amounts, calldatas, name);
   }
 
-  // creates a proposal on the governor
-  function createProposal(string calldata name) private returns (uint256) {
-    address[] memory targets = new address[](1);
+  /* 
+  Prepares proposal parameters for creating/executing competition
+  proposals on the governor
+   */
+  function getProposal(
+    bytes32 nameHash
+  )
+    private
+    view
+    returns (
+      address[] memory targets,
+      uint256[] memory amounts,
+      bytes[] memory calldatas
+    )
+  {
+    targets = new address[](1);
     targets[0] = address(this);
-    uint256[] memory amounts = new uint256[](1);
+    amounts = new uint256[](1);
     amounts[0] = 0;
-    bytes[] memory calldatas = new bytes[](1);
+    calldatas = new bytes[](1);
     calldatas[0] = abi.encodeWithSelector(
-      this.endCompetition.selector,
-      keccak256(abi.encodePacked(name))
+      this.onCompetitionEnd.selector,
+      nameHash
     );
-    return governor.propose(targets, amounts, calldatas, name);
   }
 
-  // is called by the governor if voting reaches the quorum
-  function endCompetition(bytes32 nameHash) external onlyGovernor {
+  /* 
+  Voters should call this function to know what proposal ID 
+  corresponds to the competition name they are going to vote for
+   */
+  function getProposalId(
+    string calldata competitionName
+  ) external view returns (uint256) {
+    bytes32 nameHash = keccak256(abi.encodePacked(competitionName));
+    return competitions[nameHash].proposalId;
+  }
+
+  // Is called by the competition initiator (owner) to execute competition proposal
+  function endCompetition(string calldata name) external onlyOwner {
+    bytes32 nameHash = keccak256(abi.encodePacked(name));
+    Competition storage contest = competitions[nameHash];
+    require(
+      governor.state(contest.proposalId) == IGovernor.ProposalState.Succeeded,
+      'Voting is still active or quorum was not reached'
+    );
+    (
+      address[] memory targets,
+      uint256[] memory amounts,
+      bytes[] memory calldatas
+    ) = getProposal(nameHash);
+    governor.execute(targets, amounts, calldatas, nameHash);
+  }
+
+  // Is called by the governor if voting reaches the quorum
+  function onCompetitionEnd(bytes32 nameHash) external onlyGovernor {
     Competition storage contest = competitions[nameHash];
     Team[][] memory winners = findWinners(contest.proposalId, contest.teams);
     // runs 3 times, iterates ranks
     for (uint8 rank = 0; rank < winners.length; rank++) {
       // runs as many times as there are teams in the same rank (1-few)
       for (uint8 i = 0; i < winners[rank].length; i++) {
+        if (winners[rank][i].votes == 0) return;
         // mint NFTs
         awards.givePrize(
           contest.name,
@@ -91,8 +135,8 @@ contract Competitions is Ownable {
     }
   }
 
-  /* Finds winner teams.
-  Returns a result of a kind:
+  /* Finds winning teams.
+  Returns a result like:
   [
     // 1 rank
     [Team, Team],
@@ -107,14 +151,15 @@ contract Competitions is Ownable {
     address[] memory teams
   ) private view returns (Team[][] memory winners) {
     winners = new Team[][](3);
-    winners[0] = new Team[](1);
-    winners[1] = new Team[](1);
-    winners[2] = new Team[](1);
+    winners[0] = new Team[](1); // 1st place
+    winners[1] = new Team[](1); // 2nd place
+    winners[2] = new Team[](1); // 3rd place
     for (uint8 i = 0; i < teams.length; i++) {
       Team memory team = Team({
         addr: teams[i],
         votes: governor.proposalVotes(proposalId, i + 1)
       });
+      if (team.votes == 0) continue;
       if (team.votes > winners[0][winners[0].length - 1].votes) {
         winners[2] = winners[1];
         winners[1] = winners[0];
@@ -137,7 +182,11 @@ contract Competitions is Ownable {
     }
   }
 
-  // pushes an element (Team) to the end of Team[] array
+  /* 
+  Pushes an element (Team) to the end of Team[] array.
+  It is necessary because there is no built-in `push` method for
+  memory arrays in Solidity yet
+   */
   function push(
     Team[] memory arr,
     Team memory team

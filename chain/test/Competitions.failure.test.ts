@@ -1,52 +1,17 @@
-import hre from 'hardhat';
 import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import { Proposal, ProposalState, getProposalId } from './util';
-
-const deploy = async () => {
-  const signers = await hre.ethers.getSigners();
-  const voterAddresses = signers.map((s) => s.address).slice(0, 10);
-  // deploy vote token
-  const VTFactory = await hre.ethers.getContractFactory('VoteToken');
-  const voteToken = await VTFactory.deploy();
-  await voteToken.deployed();
-  // mint NFTs
-  const mintTx = await voteToken.safeMintBatch(voterAddresses);
-  await mintTx.wait();
-  // deploy Governor
-  const GovFactory = await hre.ethers.getContractFactory('GovernorBallot');
-  const governor = await GovFactory.deploy(voteToken.address);
-  await governor.deployed();
-  signers[0].sendTransaction({
-    to: governor.address,
-    value: hre.ethers.utils.parseEther('1'),
-  });
-  // deploy Competitions
-  const CompetitionsFactory = await hre.ethers.getContractFactory(
-    'Competitions',
-  );
-  const competitions = await CompetitionsFactory.deploy(governor.address);
-  await competitions.deployed();
-  // deploy Awards
-  const AwardsFactory = await hre.ethers.getContractFactory('Awards');
-  const awards = await AwardsFactory.deploy(competitions.address);
-  // set Awards address on the Competitions
-  const setAwardstx = await competitions.setAwards(awards.address);
-  await setAwardstx.wait();
-  return { signers, voterAddresses, voteToken, governor, competitions, awards };
-};
+import { deploy } from './util';
 
 describe('Competition error path', () => {
   const competitionName = 'Competition 1';
 
   describe('Create competition', () => {
     it('non-owner can not start competitions', async () => {
-      const { signers, voterAddresses, competitions } = await loadFixture(
-        deploy,
+      const { signers, competitions } = await loadFixture(deploy);
+      const tx = competitions.connect(signers[1]).startCompetition(
+        signers.slice(1, 5).map((s) => s.address),
+        competitionName,
       );
-      const tx = competitions
-        .connect(signers[1])
-        .startCompetition(voterAddresses, competitionName);
       await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
@@ -66,17 +31,46 @@ describe('Competition error path', () => {
     });
 
     it('should not let create competition with the same name', async () => {
-      const { voterAddresses, competitions } = await loadFixture(deploy);
+      const { competitions, signers } = await loadFixture(deploy);
       const tx1 = await competitions.startCompetition(
-        voterAddresses,
+        signers.slice(1, 5).map((s) => s.address),
         competitionName,
       );
       await tx1.wait();
       const tx2 = competitions.startCompetition(
-        voterAddresses,
+        signers.slice(1, 5).map((s) => s.address),
         competitionName,
       );
       await expect(tx2).to.be.revertedWith('Competition has already started');
+    });
+
+    it('voter cannot vote twice', async () => {
+      const { competitions, signers, governor } = await loadFixture(deploy);
+      const tx1 = await competitions.startCompetition(
+        signers.slice(1, 5).map((s) => s.address),
+        competitionName,
+      );
+      await tx1.wait();
+      await mine(2);
+      const txHash = await competitions.getProposalId(competitionName);
+      const tx2 = await governor.castVote(txHash, 2);
+      await tx2.wait();
+      const tx3 = governor.castVote(txHash, 2);
+      await expect(tx3).to.be.revertedWith('GovernorBallot: vote already cast');
+    });
+
+    it('proposal should be defeated without any votes', async () => {
+      const { competitions, signers } = await loadFixture(deploy);
+      const tx1 = await competitions.startCompetition(
+        signers.slice(1, 5).map((s) => s.address),
+        competitionName,
+      );
+      await tx1.wait();
+      await mine(50);
+      const tx = competitions.endCompetition(competitionName);
+      await expect(tx).to.be.revertedWith(
+        'Voting is still active or quorum was not reached',
+      );
     });
   });
 
