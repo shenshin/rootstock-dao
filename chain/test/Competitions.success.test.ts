@@ -3,15 +3,15 @@ import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import { expect } from 'chai';
 import {
-  GovernorBallot,
+  RootstockGovernor,
   VoteToken,
   Competitions,
   Awards,
 } from '../typechain-types';
-import { Proposal, ProposalState, getProposalId, deploy } from './util';
+import { Proposal, ProposalState, getProposalId, deploy } from '../util';
 
 describe('Competitions happy path', () => {
-  let governor: GovernorBallot;
+  let governor: RootstockGovernor;
   let voteToken: VoteToken;
   let proposal: Proposal;
   let competitions: Competitions;
@@ -113,12 +113,13 @@ describe('Competitions happy path', () => {
 
   it('votes should be recorded correctly', async () => {
     const propId = await competitions.getProposalId(competitionName);
-    expect(await governor.proposalVotes(propId, 0)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 1)).to.equal(2); // 3rd
-    expect(await governor.proposalVotes(propId, 2)).to.equal(3); // 2nd
-    expect(await governor.proposalVotes(propId, 3)).to.equal(2); // 3rd
-    expect(await governor.proposalVotes(propId, 4)).to.equal(1);
-    expect(await governor.proposalVotes(propId, 5)).to.equal(4); // 1st
+    const proposalVotes = 'proposalVotes(uint256,uint8)';
+    expect(await governor[proposalVotes](propId, 0)).to.equal(0);
+    expect(await governor[proposalVotes](propId, 1)).to.equal(2); // 3rd
+    expect(await governor[proposalVotes](propId, 2)).to.equal(3); // 2nd
+    expect(await governor[proposalVotes](propId, 3)).to.equal(2); // 3rd
+    expect(await governor[proposalVotes](propId, 4)).to.equal(1);
+    expect(await governor[proposalVotes](propId, 5)).to.equal(4); // 1st
   });
 
   it('should execute the proposal and mint NFTs to the winners', async () => {

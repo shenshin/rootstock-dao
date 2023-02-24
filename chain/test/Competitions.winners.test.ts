@@ -2,12 +2,12 @@ import hre from 'hardhat';
 import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import {
-  GovernorBallot,
+  RootstockGovernor,
   VoteToken,
   Competitions,
   Awards,
 } from '../typechain-types';
-import { deploy } from './util';
+import { deploy } from '../util';
 
 /*
 This set of tests is for a scenario where there are multiple teams that are tied in 1st place
@@ -15,7 +15,7 @@ because they have the same number of votes.
 Additionally all other teams have zero votes, and thus there is no 2nd place or 3rd place prizes.
 */
 describe('Competitions. Sorting team results. Finding winners', () => {
-  let governor: GovernorBallot;
+  let governor: RootstockGovernor;
   let voteToken: VoteToken;
   let competitions: Competitions;
   let awards: Awards;
@@ -88,13 +88,14 @@ describe('Competitions. Sorting team results. Finding winners', () => {
 
   it('teams not voted for should not have votes', async () => {
     const propId = await competitions.getProposalId(competitionName);
-    expect(await governor.proposalVotes(propId, 1)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 2)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 3)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 6)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 7)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 8)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 9)).to.equal(0);
+    const proposalVotes = 'proposalVotes(uint256,uint8)';
+    expect(await governor[proposalVotes](propId, 1)).to.equal(0);
+    expect(await governor[proposalVotes](propId, 2)).to.equal(0);
+    expect(await governor[proposalVotes](propId, 3)).to.equal(0);
+    expect(await governor[proposalVotes](propId, 6)).to.equal(0);
+    expect(await governor[proposalVotes](propId, 7)).to.equal(0);
+    expect(await governor[proposalVotes](propId, 8)).to.equal(0);
+    expect(await governor[proposalVotes](propId, 9)).to.equal(0);
   });
 
   it('should execute the proposal and mint NFTs to the winners', async () => {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
-import './GovernorBallot.sol';
+import './RootstockGovernor.sol';
 import './Awards.sol';
 import 'hardhat/console.sol';
 
@@ -20,17 +20,17 @@ contract Competitions is Ownable {
   // competitions are identified by description hash
   mapping(bytes32 => Competition) public competitions;
 
-  GovernorBallot public immutable governor;
+  RootstockGovernor public immutable governor;
   Awards public awards; // prizes NFT s/c
 
-  constructor(GovernorBallot _governor) {
+  constructor(RootstockGovernor _governor) {
     governor = _governor;
   }
 
   modifier onlyGovernor() {
     require(
       msg.sender == address(governor),
-      'Can be called only by the GovernorBallot'
+      'Competitions: Can be called only by the Governor'
     );
     _;
   }
@@ -47,11 +47,14 @@ contract Competitions is Ownable {
   ) external onlyOwner {
     require(
       teams.length > 1 && teams.length <= 250,
-      'Min 2, max 250 teams are allowed'
+      'Competitions: Min 2, max 250 teams are allowed'
     );
     bytes32 nameHash = keccak256(abi.encodePacked(name));
     Competition storage contest = competitions[nameHash];
-    require(contest.teams.length == 0, 'Competition has already started');
+    require(
+      contest.teams.length == 0,
+      'Competitions: Competition has already started'
+    );
     contest.teams = teams;
     contest.name = name;
     (
@@ -59,7 +62,12 @@ contract Competitions is Ownable {
       uint256[] memory amounts,
       bytes[] memory calldatas
     ) = getProposal(nameHash);
-    contest.proposalId = governor.propose(targets, amounts, calldatas, name);
+    contest.proposalId = governor.proposeBallot(
+      targets,
+      amounts,
+      calldatas,
+      name
+    );
   }
 
   /* 
@@ -105,7 +113,7 @@ contract Competitions is Ownable {
     Competition storage contest = competitions[nameHash];
     require(
       governor.state(contest.proposalId) == IGovernor.ProposalState.Succeeded,
-      'Proposal is not ready to be executed'
+      'Competitions: Proposal is not ready to be executed'
     );
     (
       address[] memory targets,
@@ -197,10 +205,10 @@ contract Competitions is Ownable {
   }
 
   receive() external payable {
-    revert('No need to send me money');
+    revert('Competitions: No need to send me money');
   }
 
   fallback() external {
-    revert('Unknown function call');
+    revert('Competitions: Unknown function call');
   }
 }

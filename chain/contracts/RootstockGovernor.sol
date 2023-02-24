@@ -3,14 +3,14 @@ pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/governance/Governor.sol';
 import '@openzeppelin/contracts/governance/extensions/GovernorSettings.sol';
-import '@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol';
+import './GovernorCountingUniversal.sol';
 import '@openzeppelin/contracts/governance/extensions/GovernorVotes.sol';
 import '@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol';
 
 contract RootstockGovernor is
   Governor,
   GovernorSettings,
-  GovernorCountingSimple,
+  GovernorCountingUniversal,
   GovernorVotes,
   GovernorVotesQuorumFraction
 {
@@ -18,9 +18,9 @@ contract RootstockGovernor is
     IVotes _token
   )
     Governor('RootstockGovernor')
-    GovernorSettings(1 /* 1 block */, 10 /* 5 minutes */, 0)
+    GovernorSettings(1 /* 1 block */, 20 /* 10 minutes */, 0)
     GovernorVotes(_token)
-    GovernorVotesQuorumFraction(4)
+    GovernorVotesQuorumFraction(6)
   {}
 
   // The following functions are overrides required by Solidity.

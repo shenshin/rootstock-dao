@@ -27,34 +27,50 @@ export enum ProposalState {
   Executed,
 }
 
+export enum VoteOptions {
+  Against,
+  For,
+  Abstain,
+}
+
 export async function deploy() {
-  const signers = await hre.ethers.getSigners();
-  // deploy vote token
-  const VTFactory = await hre.ethers.getContractFactory('VoteToken');
-  const voteToken = await VTFactory.deploy();
+  // deploy VoteToken NFT smart contract
+  const VoteTokenFactory = await hre.ethers.getContractFactory('VoteToken');
+  const voteToken = await VoteTokenFactory.deploy();
   await voteToken.deployed();
-  // mint NFTs
-  const mintTx = await voteToken.safeMintBatch(signers.map((s) => s.address));
-  await mintTx.wait();
-  // deploy Governor
-  const GovFactory = await hre.ethers.getContractFactory('GovernorBallot');
-  const governor = await GovFactory.deploy(voteToken.address);
+
+  // mint some NFTs
+  const signers = await hre.ethers.getSigners();
+  const tx = await voteToken.safeMintBatch(signers.map((s) => s.address));
+  await tx.wait();
+
+  // deploy RootstockGovernor
+  const GovernorFactory = await hre.ethers.getContractFactory(
+    'RootstockGovernor',
+  );
+  const governor = await GovernorFactory.deploy(voteToken.address);
   await governor.deployed();
-  signers[0].sendTransaction({
+
+  // Send some RBTC to Governor treasury for proposal execution testing
+  const amount = '0.00001';
+  const transferTx = await signers[0].sendTransaction({
     to: governor.address,
-    value: hre.ethers.utils.parseEther('1'),
+    value: hre.ethers.utils.parseEther(amount),
   });
+  await transferTx.wait();
+
   // deploy Competitions
   const CompetitionsFactory = await hre.ethers.getContractFactory(
     'Competitions',
   );
   const competitions = await CompetitionsFactory.deploy(governor.address);
   await competitions.deployed();
+
   // deploy Awards
   const AwardsFactory = await hre.ethers.getContractFactory('Awards');
   const awards = await AwardsFactory.deploy(competitions.address);
-  // set Awards address on the Competitions
-  const setAwardstx = await competitions.setAwards(awards.address);
-  await setAwardstx.wait();
+  await awards.deployed();
+  await competitions.setAwards(awards.address);
+
   return { signers, voteToken, governor, competitions, awards };
 }
