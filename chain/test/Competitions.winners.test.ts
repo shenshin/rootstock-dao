@@ -95,6 +95,7 @@ describe('Competitions. Sorting team results. Finding winners', () => {
 
   it('teams should receive their minted NFTs', async () => {
     const checkNftMint = async (
+      shouldMint: boolean,
       teamIndex: number,
       rank: number,
       votingResult: number,
