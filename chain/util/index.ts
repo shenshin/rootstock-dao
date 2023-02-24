@@ -70,7 +70,8 @@ export async function deploy() {
   const AwardsFactory = await hre.ethers.getContractFactory('Awards');
   const awards = await AwardsFactory.deploy(competitions.address);
   await awards.deployed();
-  await competitions.setAwards(awards.address);
+  const setAwardTx = await competitions.setAwards(awards.address);
+  await setAwardTx.wait();
 
   return { signers, voteToken, governor, competitions, awards };
 }
