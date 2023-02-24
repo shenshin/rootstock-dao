@@ -86,6 +86,17 @@ describe('Competitions. Sorting team results. Finding winners', () => {
     // other teams don't have votes
   });
 
+  it('teams not voted for should not have votes', async () => {
+    const propId = await competitions.getProposalId(competitionName);
+    expect(await governor.proposalVotes(propId, 1)).to.equal(0);
+    expect(await governor.proposalVotes(propId, 2)).to.equal(0);
+    expect(await governor.proposalVotes(propId, 3)).to.equal(0);
+    expect(await governor.proposalVotes(propId, 6)).to.equal(0);
+    expect(await governor.proposalVotes(propId, 7)).to.equal(0);
+    expect(await governor.proposalVotes(propId, 8)).to.equal(0);
+    expect(await governor.proposalVotes(propId, 9)).to.equal(0);
+  });
+
   it('should execute the proposal and mint NFTs to the winners', async () => {
     await mine(20);
     const tx = await competitions.endCompetition(competitionName);
@@ -97,25 +108,41 @@ describe('Competitions. Sorting team results. Finding winners', () => {
     const checkNftMint = async (
       shouldMint: boolean,
       teamIndex: number,
-      rank: number,
+      ranks: number[],
       votingResult: number,
     ) => {
-      const index = teamIndex - 1;
-      const id = hre.ethers.utils.solidityKeccak256(
-        ['string', 'address', 'uint8'],
-        [competitionName, teams[index], rank],
+      await Promise.all(
+        ranks.map(async (rank) => {
+          const index = teamIndex - 1;
+          const id = hre.ethers.utils.solidityKeccak256(
+            ['string', 'address', 'uint8'],
+            [competitionName, teams[index], rank],
+          );
+          if (shouldMint) {
+            expect(await awards.ownerOf(id)).to.equal(teams[index]);
+            const prize0 = await awards.prizes(id);
+            expect(prize0.competitionName).to.equal(competitionName);
+            expect(prize0.votingResult).to.equal(votingResult);
+            expect(prize0.rank).to.equal(rank);
+          } else {
+            await expect(awards.ownerOf(id)).to.be.revertedWith(
+              'ERC721: invalid token ID',
+            );
+          }
+        }),
       );
-      expect(await awards.ownerOf(id)).to.equal(teams[index]);
-      const prize0 = await awards.prizes(id);
-      expect(prize0.competitionName).to.equal(competitionName);
-      expect(prize0.votingResult).to.equal(votingResult);
-      expect(prize0.rank).to.equal(rank);
     };
     // these teams all have a tied 1st place prize
-    await checkNftMint(true, 5, 1, 5);
-    await checkNftMint(true, 4, 1, 5);
-    await checkNftMint(true, 10, 1, 5);
+    await checkNftMint(true, 5, [1], 5);
+    await checkNftMint(true, 4, [1], 5);
+    await checkNftMint(true, 10, [1], 5);
     // all other teams should not get any prize, as they have received zero votes
-    await checkNftMint(false, 1, 0, 0);
+    await checkNftMint(false, 1, [0, 1, 2, 3], 0);
+    await checkNftMint(false, 2, [0, 1, 2, 3], 0);
+    await checkNftMint(false, 3, [0, 1, 2, 3], 0);
+    await checkNftMint(false, 6, [0, 1, 2, 3], 0);
+    await checkNftMint(false, 7, [0, 1, 2, 3], 0);
+    await checkNftMint(false, 8, [0, 1, 2, 3], 0);
+    await checkNftMint(false, 9, [0, 1, 2, 3], 0);
   });
 });
