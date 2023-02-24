@@ -20,7 +20,7 @@ contract GovernorBallot is
     Governor('GovernorBallot')
     GovernorSettings(1 /* 1 block */, 20 /* 10 minutes */, 0)
     GovernorVotes(_token)
-    GovernorVotesQuorumFraction(4)
+    GovernorVotesQuorumFraction(6)
   {}
 
   // The following functions are overrides required by Solidity.

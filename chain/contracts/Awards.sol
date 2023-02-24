@@ -3,8 +3,14 @@ pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import './Competitions.sol';
-import 'hardhat/console.sol';
 
+/* 
+This is a possible implementation of NFT smart contract which mints
+tokens for competition winners. Tokens include information about:
+- competition name
+- number of votes a team has got
+- team's rank in the competition
+ */
 contract Awards is ERC721 {
   struct Prize {
     string competitionName;

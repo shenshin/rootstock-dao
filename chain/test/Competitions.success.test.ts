@@ -1,5 +1,5 @@
 import hre from 'hardhat';
-import { mine } from '@nomicfoundation/hardhat-network-helpers';
+import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs';
 import { expect } from 'chai';
 import {
@@ -8,7 +8,7 @@ import {
   Competitions,
   Awards,
 } from '../typechain-types';
-import { Proposal, ProposalState, getProposalId } from './util';
+import { Proposal, ProposalState, getProposalId, deploy } from './util';
 
 describe('Competitions happy path', () => {
   let governor: GovernorBallot;
@@ -19,39 +19,12 @@ describe('Competitions happy path', () => {
   let teams: string[];
   let competitionName: string;
 
-  const deploy = async () => {
-    // deploy vote token
-    const VTFactory = await hre.ethers.getContractFactory('VoteToken');
-    voteToken = await VTFactory.deploy();
-    await voteToken.deployed();
-    // mint NFTs
-    const signers = await hre.ethers.getSigners();
-    const mintTx = await voteToken.safeMintBatch(signers.map((s) => s.address));
-    await mintTx.wait();
-    // deploy Governor
-    const GovFactory = await hre.ethers.getContractFactory('GovernorBallot');
-    governor = await GovFactory.deploy(voteToken.address);
-    await governor.deployed();
-    signers[0].sendTransaction({
-      to: governor.address,
-      value: hre.ethers.utils.parseEther('1'),
-    });
-    // deploy Competitions
-    const CompetitionsFactory = await hre.ethers.getContractFactory(
-      'Competitions',
-    );
-    competitions = await CompetitionsFactory.deploy(governor.address);
-    await competitions.deployed();
-    // deploy Awards
-    const AwardsFactory = await hre.ethers.getContractFactory('Awards');
-    awards = await AwardsFactory.deploy(competitions.address);
-    // set Awards address on the Competitions
-    const setAwardstx = await competitions.setAwards(awards.address);
-    await setAwardstx.wait();
-  };
-
   before(async () => {
-    await deploy();
+    const contracts = await loadFixture(deploy);
+    governor = contracts.governor;
+    voteToken = contracts.voteToken;
+    competitions = contracts.competitions;
+    awards = contracts.awards;
   });
 
   it('should delegate voting power', async () => {
@@ -72,9 +45,8 @@ describe('Competitions happy path', () => {
       ['string'],
       [competitionName],
     );
-
     const callback = competitions.interface.encodeFunctionData(
-      'endCompetition',
+      'onCompetitionEnd',
       [descHash],
     );
     proposal = [[competitions.address], [0], [callback], competitionName];
@@ -103,13 +75,13 @@ describe('Competitions happy path', () => {
 
   it('proposal should be active', async () => {
     await mine(2);
-    const propId = getProposalId(proposal);
+    const propId = await competitions.getProposalId(competitionName);
     const state = await governor.state(propId);
     expect(state).to.equal(ProposalState.Active);
   });
 
   it('voters should vote for different teams', async () => {
-    const propId = getProposalId(proposal);
+    const propId = await competitions.getProposalId(competitionName);
     const signers = await hre.ethers.getSigners();
     const vote = async (signerIndex: number, suppport: number) => {
       await expect(
@@ -134,13 +106,13 @@ describe('Competitions happy path', () => {
 
   it('proposal should be successful', async () => {
     await mine(20);
-    const propId = getProposalId(proposal);
+    const propId = await competitions.getProposalId(competitionName);
     const state = await governor.state(propId);
     expect(state).to.equal(ProposalState.Succeeded);
   });
 
   it('votes should be recorded correctly', async () => {
-    const propId = getProposalId(proposal);
+    const propId = await competitions.getProposalId(competitionName);
     expect(await governor.proposalVotes(propId, 0)).to.equal(0);
     expect(await governor.proposalVotes(propId, 1)).to.equal(2); // 3rd
     expect(await governor.proposalVotes(propId, 2)).to.equal(3); // 2nd
@@ -150,12 +122,7 @@ describe('Competitions happy path', () => {
   });
 
   it('should execute the proposal and mint NFTs to the winners', async () => {
-    const [targets, values, calldatas] = proposal;
-    const descHash = hre.ethers.utils.solidityKeccak256(
-      ['string'],
-      [competitionName],
-    );
-    const tx = await governor.execute(targets, values, calldatas, descHash);
+    const tx = await competitions.endCompetition(competitionName);
     await expect(tx).to.emit(governor, 'ProposalExecuted');
     await expect(tx).to.emit(awards, 'Transfer');
   });

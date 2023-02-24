@@ -3,6 +3,10 @@ pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/governance/Governor.sol';
 
+/* 
+Modified Governor Voting module where instead of answering for/against/abstain
+a voter can select one of 255 alternatives (0 - 255, where 0 is abstain)
+ */
 abstract contract GovernorCountingBallot is Governor {
   struct ProposalVote {
     uint256 totalVotes;
