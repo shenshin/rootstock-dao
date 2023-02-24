@@ -18,26 +18,43 @@ async function main() {
       if ('tokenId' in event.args!)
         console.log(`ID # ${event.args.tokenId}, to: ${event.args.to}`);
     });
-    // deploy RootstockGovernor
+    // deploy GovernorBallot
     const GovernorFactory = await hre.ethers.getContractFactory(
-      'RootstockGovernor',
+      'GovernorBallot',
     );
-    const rootstockGovernor = await GovernorFactory.deploy(voteToken.address);
-    await rootstockGovernor.deployed();
+    const governor = await GovernorFactory.deploy(voteToken.address);
+    await governor.deployed();
     console.log(
-      `RootstockGovernor was deployed at ${hre.network.name} with address ${rootstockGovernor.address}`,
+      `GovernorBallot was deployed at ${hre.network.name} with address ${governor.address}`,
     );
     // Send some RBTC to Governor treasury for proposal execution testing
     const amount = '0.00001';
     const transferTx = await signers[0].sendTransaction({
-      to: rootstockGovernor.address,
+      to: governor.address,
       value: hre.ethers.utils.parseEther(amount),
     });
     await transferTx.wait();
     const bal = hre.ethers.utils.formatEther(
-      await hre.ethers.provider.getBalance(rootstockGovernor.address),
+      await hre.ethers.provider.getBalance(governor.address),
     );
     console.log(`Sent ${bal} RBTC to RootstockGovernor`);
+    // deploy Competitions
+    const CompetitionsFactory = await hre.ethers.getContractFactory(
+      'Competitions',
+    );
+    const competitions = await CompetitionsFactory.deploy(governor.address);
+    await competitions.deployed();
+    console.log(
+      `Competitions was deployed at ${hre.network.name} with address ${competitions.address}`,
+    );
+    // deploy Awards
+    const AwardsFactory = await hre.ethers.getContractFactory('Awards');
+    const awards = await AwardsFactory.deploy(competitions.address);
+    await awards.deployed();
+    await competitions.setAwards(awards.address);
+    console.log(
+      `Awards was deployed at ${hre.network.name} with address ${awards.address}`,
+    );
     process.exit(0);
   } catch (error) {
     console.error(error);
