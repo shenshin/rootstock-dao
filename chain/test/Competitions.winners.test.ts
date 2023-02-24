@@ -111,8 +111,11 @@ describe('Competitions. Sorting team results. Finding winners', () => {
       expect(prize0.votingResult).to.equal(votingResult);
       expect(prize0.rank).to.equal(rank);
     };
-    await checkNftMint(5, 1, 5);
-    await checkNftMint(4, 1, 5);
-    await checkNftMint(10, 1, 5);
+    // these teams all have a tied 1st place prize
+    await checkNftMint(true, 5, 1, 5);
+    await checkNftMint(true, 4, 1, 5);
+    await checkNftMint(true, 10, 1, 5);
+    // all other teams should not get any prize, as they have received zero votes
+    await checkNftMint(false, 1, 0, 0);
   });
 });
