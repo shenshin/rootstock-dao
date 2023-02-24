@@ -9,6 +9,11 @@ import {
 } from '../typechain-types';
 import { deploy } from './util';
 
+/*
+This set of tests is for a scenario where there are multiple teams that are tied in 1st place
+because they have the same number of votes.
+Additionally all other teams have zero votes, and thus there is no 2nd place or 3rd place prizes.
+*/
 describe('Competitions. Sorting team results. Finding winners', () => {
   let governor: GovernorBallot;
   let voteToken: VoteToken;
