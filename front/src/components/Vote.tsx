@@ -1,10 +1,6 @@
 import { useContext, useState } from 'react';
 import { Web3Context } from '../context/web3Context';
-import {
-  ProposalContext,
-  ProposalState,
-  // isCompetition,
-} from '../context/proposalContext';
+import { ProposalContext, ProposalState } from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 
 enum VoteOptions {

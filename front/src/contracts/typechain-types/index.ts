@@ -42,8 +42,8 @@ export type { DoubleEndedQueue } from "./@openzeppelin/contracts/utils/structs/D
 export { DoubleEndedQueue__factory } from "./factories/@openzeppelin/contracts/utils/structs/DoubleEndedQueue__factory";
 export type { Awards } from "./contracts/Awards";
 export { Awards__factory } from "./factories/contracts/Awards__factory";
-export type { Competitions } from "./contracts/Competitions";
-export { Competitions__factory } from "./factories/contracts/Competitions__factory";
+export type { Competition } from "./contracts/Competition";
+export { Competition__factory } from "./factories/contracts/Competition__factory";
 export type { GovernorCountingUniversal } from "./contracts/GovernorCountingUniversal";
 export { GovernorCountingUniversal__factory } from "./factories/contracts/GovernorCountingUniversal__factory";
 export type { RootstockGovernor } from "./contracts/RootstockGovernor";

@@ -1,15 +1,8 @@
 import { useContext, useState } from 'react';
 import { utils } from 'ethers';
 import { Web3Context } from '../context/web3Context';
-import {
-  ProposalContext,
-  ProposalState,
-  isCompetition,
-  ITransfer,
-  ICompetition,
-} from '../context/proposalContext';
+import { ProposalContext, ProposalState } from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
-import { RootstockGovernor, Competitions } from '../contracts/typechain-types';
 
 function Execute() {
   const { provider } = useContext(Web3Context);
@@ -18,40 +11,25 @@ function Execute() {
   const [loading, setLoading] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const executeTransfer = async (
-    proposal: ITransfer,
-    governor: RootstockGovernor,
-  ) => {
-    const { addresses, amounts, calldatas, description } = proposal;
-    const descHash = utils.solidityKeccak256(['string'], [description]);
-    const tx = await governor.execute(addresses, amounts, calldatas, descHash);
-    setLoading(`Executing RBTC transfer proposal ${proposal.description}`);
-    await tx.wait();
-  };
-
-  const endCompetition = async (
-    competition: ICompetition,
-    contract: Competitions,
-  ) => {
-    const tx = await contract.endCompetition(competition.description);
-    setLoading(`Executing competition ${competition.description}`);
-    await tx.wait();
-  };
-
   const executeProposal = async () => {
     try {
       setErrorMessage('');
       const proposal = proposals[proposalIndex];
-      const { governor, competitions } = getContracts(provider!);
+      const { governor } = getContracts(provider!);
       if (
         (await governor.state(proposal.proposalId)) !== ProposalState.Succeeded
       )
         throw new Error(`Proposal cannot be executed`);
-      if (isCompetition(proposal)) {
-        await endCompetition(proposal, competitions);
-      } else {
-        await executeTransfer(proposal, governor);
-      }
+      const { addresses, amounts, calldatas, description } = proposal;
+      const descHash = utils.solidityKeccak256(['string'], [description]);
+      const tx = await governor.execute(
+        addresses,
+        amounts,
+        calldatas,
+        descHash,
+      );
+      setLoading(`Executing proposal ${proposal.description}`);
+      await tx.wait();
       setLoading('Proposal was executed');
     } catch (error) {
       if (error instanceof Error) setErrorMessage(error.message);

@@ -26,53 +26,33 @@ import type {
   PromiseOrValue,
 } from "../common";
 
-export interface CompetitionsInterface extends utils.Interface {
+export interface CompetitionInterface extends utils.Interface {
   functions: {
     "awards()": FunctionFragment;
-    "competitions(bytes32)": FunctionFragment;
-    "endCompetition(string)": FunctionFragment;
-    "getProposalId(string)": FunctionFragment;
     "governor()": FunctionFragment;
-    "onCompetitionEnd(bytes32)": FunctionFragment;
+    "onCompetitionEnd(string,address[])": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "setAwards(address)": FunctionFragment;
-    "startCompetition(address[],string)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "awards"
-      | "competitions"
-      | "endCompetition"
-      | "getProposalId"
       | "governor"
       | "onCompetitionEnd"
       | "owner"
       | "renounceOwnership"
       | "setAwards"
-      | "startCompetition"
       | "transferOwnership"
   ): FunctionFragment;
 
   encodeFunctionData(functionFragment: "awards", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "competitions",
-    values: [PromiseOrValue<BytesLike>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "endCompetition",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getProposalId",
-    values: [PromiseOrValue<string>]
-  ): string;
   encodeFunctionData(functionFragment: "governor", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "onCompetitionEnd",
-    values: [PromiseOrValue<BytesLike>]
+    values: [PromiseOrValue<string>, PromiseOrValue<string>[]]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -84,27 +64,11 @@ export interface CompetitionsInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "startCompetition",
-    values: [PromiseOrValue<string>[], PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [PromiseOrValue<string>]
   ): string;
 
   decodeFunctionResult(functionFragment: "awards", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "competitions",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "endCompetition",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getProposalId",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "governor", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "onCompetitionEnd",
@@ -116,10 +80,6 @@ export interface CompetitionsInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setAwards", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "startCompetition",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
@@ -144,12 +104,12 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
-export interface Competitions extends BaseContract {
+export interface Competition extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: CompetitionsInterface;
+  interface: CompetitionInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -173,25 +133,11 @@ export interface Competitions extends BaseContract {
   functions: {
     awards(overrides?: CallOverrides): Promise<[string]>;
 
-    competitions(
-      arg0: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber] & { name: string; proposalId: BigNumber }>;
-
-    endCompetition(
-      name: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    getProposalId(
-      competitionName: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     governor(overrides?: CallOverrides): Promise<[string]>;
 
     onCompetitionEnd(
-      nameHash: PromiseOrValue<BytesLike>,
+      contestName: PromiseOrValue<string>,
+      teams: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -206,12 +152,6 @@ export interface Competitions extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    startCompetition(
-      teams: PromiseOrValue<string>[],
-      name: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     transferOwnership(
       newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -220,25 +160,11 @@ export interface Competitions extends BaseContract {
 
   awards(overrides?: CallOverrides): Promise<string>;
 
-  competitions(
-    arg0: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<[string, BigNumber] & { name: string; proposalId: BigNumber }>;
-
-  endCompetition(
-    name: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getProposalId(
-    competitionName: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   governor(overrides?: CallOverrides): Promise<string>;
 
   onCompetitionEnd(
-    nameHash: PromiseOrValue<BytesLike>,
+    contestName: PromiseOrValue<string>,
+    teams: PromiseOrValue<string>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -253,12 +179,6 @@ export interface Competitions extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  startCompetition(
-    teams: PromiseOrValue<string>[],
-    name: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   transferOwnership(
     newOwner: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -267,25 +187,11 @@ export interface Competitions extends BaseContract {
   callStatic: {
     awards(overrides?: CallOverrides): Promise<string>;
 
-    competitions(
-      arg0: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber] & { name: string; proposalId: BigNumber }>;
-
-    endCompetition(
-      name: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getProposalId(
-      competitionName: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     governor(overrides?: CallOverrides): Promise<string>;
 
     onCompetitionEnd(
-      nameHash: PromiseOrValue<BytesLike>,
+      contestName: PromiseOrValue<string>,
+      teams: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -295,12 +201,6 @@ export interface Competitions extends BaseContract {
 
     setAwards(
       _awards: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    startCompetition(
-      teams: PromiseOrValue<string>[],
-      name: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -324,25 +224,11 @@ export interface Competitions extends BaseContract {
   estimateGas: {
     awards(overrides?: CallOverrides): Promise<BigNumber>;
 
-    competitions(
-      arg0: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    endCompetition(
-      name: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getProposalId(
-      competitionName: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     governor(overrides?: CallOverrides): Promise<BigNumber>;
 
     onCompetitionEnd(
-      nameHash: PromiseOrValue<BytesLike>,
+      contestName: PromiseOrValue<string>,
+      teams: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -357,12 +243,6 @@ export interface Competitions extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    startCompetition(
-      teams: PromiseOrValue<string>[],
-      name: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     transferOwnership(
       newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -372,25 +252,11 @@ export interface Competitions extends BaseContract {
   populateTransaction: {
     awards(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    competitions(
-      arg0: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    endCompetition(
-      name: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getProposalId(
-      competitionName: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     governor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     onCompetitionEnd(
-      nameHash: PromiseOrValue<BytesLike>,
+      contestName: PromiseOrValue<string>,
+      teams: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -402,12 +268,6 @@ export interface Competitions extends BaseContract {
 
     setAwards(
       _awards: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    startCompetition(
-      teams: PromiseOrValue<string>[],
-      name: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

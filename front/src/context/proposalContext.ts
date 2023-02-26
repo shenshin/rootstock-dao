@@ -4,24 +4,9 @@ import { ethers, BigNumber } from 'ethers';
 export interface IProposal {
   description: string;
   proposalId: BigNumber;
-}
-export interface ITransfer extends IProposal {
   addresses: string[];
   amounts: BigNumber[];
   calldatas: string[];
-}
-
-export interface ICompetition extends IProposal {
-  teams: {
-    id: number;
-    name: string;
-    address: string;
-  }[];
-}
-
-// typeguard
-export function isCompetition(proposal: IProposal): proposal is ICompetition {
-  return 'teams' in proposal;
 }
 
 export enum ProposalState {
@@ -53,10 +38,8 @@ export function getProposalId(
 }
 
 export interface IProposalContext {
-  proposals: Array<ITransfer | ICompetition>;
-  setProposals: React.Dispatch<
-    React.SetStateAction<Array<ITransfer | ICompetition>>
-  >;
+  proposals: Array<IProposal>;
+  setProposals: React.Dispatch<React.SetStateAction<Array<IProposal>>>;
 }
 
 export const ProposalContext = createContext<IProposalContext>({

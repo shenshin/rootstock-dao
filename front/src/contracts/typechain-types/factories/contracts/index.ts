@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export { Awards__factory } from "./Awards__factory";
-export { Competitions__factory } from "./Competitions__factory";
+export { Competition__factory } from "./Competition__factory";
 export { GovernorCountingUniversal__factory } from "./GovernorCountingUniversal__factory";
 export { RootstockGovernor__factory } from "./RootstockGovernor__factory";
 export { VoteToken__factory } from "./VoteToken__factory";

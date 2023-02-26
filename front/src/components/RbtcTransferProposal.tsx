@@ -1,13 +1,9 @@
 import { useContext, useState } from 'react';
 import { utils } from 'ethers';
 import { Web3Context } from '../context/web3Context';
-import {
-  ProposalContext,
-  ITransfer,
-  getProposalId,
-} from '../context/proposalContext';
+import { ProposalContext, getProposalId } from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
-import './Propose.css';
+import './RbtcTransferProposal.css';
 
 function Propose() {
   const { address, provider } = useContext(Web3Context);
@@ -34,6 +30,7 @@ function Propose() {
       const calldatas: string[] = ['0x']; // empty calldata
       // create a new proposal
       const { governor } = getContracts(provider!);
+      // regular `propose` method
       const tx = await governor.propose(
         addresses,
         amounts,
@@ -50,14 +47,15 @@ function Propose() {
         calldatas,
         description,
       );
-      const newProposal: ITransfer = {
-        description,
-        proposalId,
-        addresses,
-        amounts,
-        calldatas,
-      };
-      setProposals((old) => [...old, newProposal]);
+      setProposals((old) =>
+        old.concat({
+          description,
+          proposalId,
+          addresses,
+          amounts,
+          calldatas,
+        }),
+      );
     } catch (error) {
       if (error instanceof Error) setErrorMessage(error.message);
     }

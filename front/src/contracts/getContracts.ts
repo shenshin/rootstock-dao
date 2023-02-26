@@ -4,8 +4,8 @@ import {
   VoteToken,
   RootstockGovernor__factory,
   RootstockGovernor,
-  Competitions__factory,
-  Competitions,
+  Competition__factory,
+  Competition,
   Awards__factory,
   Awards,
 } from './typechain-types';
@@ -18,7 +18,7 @@ import awardsDeployed from './Awards.rsktestnet.address.json';
 export interface Contracts {
   voteToken: VoteToken;
   governor: RootstockGovernor;
-  competitions: Competitions;
+  competition: Competition;
   awards: Awards;
 }
 
@@ -36,17 +36,17 @@ export function getContracts(
     RootstockGovernor__factory.abi,
     provider.getSigner(0),
   ) as RootstockGovernor;
-  const competitions = new ethers.Contract(
+  const competition = new ethers.Contract(
     competitionsDeployed.address.toLowerCase(),
-    Competitions__factory.abi,
+    Competition__factory.abi,
     provider.getSigner(0),
-  ) as Competitions;
+  ) as Competition;
   const awards = new ethers.Contract(
     awardsDeployed.address.toLowerCase(),
     Awards__factory.abi,
     provider.getSigner(0),
   ) as Awards;
-  return { voteToken, governor, competitions, awards };
+  return { voteToken, governor, competition, awards };
 }
 
 export default getContracts;

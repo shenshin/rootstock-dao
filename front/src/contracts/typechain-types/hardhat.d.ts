@@ -85,9 +85,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Awards__factory>;
     getContractFactory(
-      name: "Competitions",
+      name: "Competition",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Competitions__factory>;
+    ): Promise<Contracts.Competition__factory>;
     getContractFactory(
       name: "GovernorCountingUniversal",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -192,10 +192,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Awards>;
     getContractAt(
-      name: "Competitions",
+      name: "Competition",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.Competitions>;
+    ): Promise<Contracts.Competition>;
     getContractAt(
       name: "GovernorCountingUniversal",
       address: string,

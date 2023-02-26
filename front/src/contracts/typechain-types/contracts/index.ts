@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { Awards } from "./Awards";
-export type { Competitions } from "./Competitions";
+export type { Competition } from "./Competition";
 export type { GovernorCountingUniversal } from "./GovernorCountingUniversal";
 export type { RootstockGovernor } from "./RootstockGovernor";
 export type { VoteToken } from "./VoteToken";
