@@ -19,16 +19,16 @@ contract Awards is ERC721 {
   }
   mapping(uint256 => Prize) public prizes;
 
-  Competition immutable competitions;
+  Competition immutable competition;
 
-  constructor(Competition _competitions) ERC721('AwardToken', 'AWD') {
-    competitions = _competitions;
+  constructor(Competition _competition) ERC721('AwardToken', 'AWD') {
+    competition = _competition;
   }
 
   modifier onlyCompetition() {
     require(
-      msg.sender == address(competitions),
-      'Can be called only by Competitions'
+      msg.sender == address(competition),
+      'Can be called only by Competition'
     );
     _;
   }

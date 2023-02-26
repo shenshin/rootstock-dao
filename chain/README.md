@@ -10,7 +10,7 @@ Voting system is represented by smart contracts:
 
 ## Competition rules
 
-- after deployment Competitions owner has to link Competitions s/c with Awards s/c by calling `setAwards` function
+- after deployment Competition owner has to link Competition s/c with Awards s/c by calling `setAwards` function
 - 250 teams can participate in a competition
 - a competition has to be [encoded as a usual Governor proposal](https://docs.openzeppelin.com/contracts/4.x/api/governance#IGovernor-propose-address---uint256---bytes---string-), where:
   1. targets - `Competition` s/c address
@@ -25,10 +25,10 @@ Voting system is represented by smart contracts:
 - voters can vote once for one of the teams in competition proposal by calling `castVote(uint256 proposalId, uint8 teamNumber)` on the Governor. 
 - successful competition proposal can be executed by calling `execute` on the Governor s/c
 - after the execution the Governor calls `onCompetitionEnd` on the Competition s/c
-- Competitions s/c then collects the voting results from the Governor and mints NFTs to the winners
+- Competition s/c then collects the voting results from the Governor and mints NFTs to the winners
 - participants who took 1, 2 or 3 places get the awards. If 2 teams get the same number of votes, they share the rank.
 - each winner gets an NFT with unique id
-- mapping `prizes(tokenId)` on the Competitions s/c keeps the information about minted NTF awards: 
+- mapping `prizes(tokenId)` on the Competition s/c keeps the information about minted NTF awards: 
   - competition name
   - number of votes a team has got
   - team's rank in the competition

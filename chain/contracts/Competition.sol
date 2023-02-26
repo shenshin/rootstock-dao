@@ -21,7 +21,7 @@ contract Competition is Ownable {
   modifier onlyGovernor() {
     require(
       msg.sender == address(governor),
-      'Competitions: Can be called only by the Governor'
+      'Competition: Can be called only by the Governor'
     );
     _;
   }
@@ -139,10 +139,10 @@ contract Competition is Ownable {
   }
 
   receive() external payable {
-    revert('Competitions: No need to send me money');
+    revert('Competition: No need to send me money');
   }
 
   fallback() external {
-    revert('Competitions: Unknown function call');
+    revert('Competition: Unknown function call');
   }
 }
