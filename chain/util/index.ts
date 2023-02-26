@@ -59,19 +59,17 @@ export async function deploy() {
   });
   await transferTx.wait();
 
-  // deploy Competitions
-  const CompetitionsFactory = await hre.ethers.getContractFactory(
-    'Competitions',
-  );
-  const competitions = await CompetitionsFactory.deploy(governor.address);
-  await competitions.deployed();
+  // deploy Competition
+  const CompetitionFactory = await hre.ethers.getContractFactory('Competition');
+  const competition = await CompetitionFactory.deploy(governor.address);
+  await competition.deployed();
 
   // deploy Awards
   const AwardsFactory = await hre.ethers.getContractFactory('Awards');
-  const awards = await AwardsFactory.deploy(competitions.address);
+  const awards = await AwardsFactory.deploy(competition.address);
   await awards.deployed();
-  const setAwardTx = await competitions.setAwards(awards.address);
+  const setAwardTx = await competition.setAwards(awards.address);
   await setAwardTx.wait();
 
-  return { signers, voteToken, governor, competitions, awards };
+  return { signers, voteToken, governor, competition, awards };
 }

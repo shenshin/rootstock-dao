@@ -1,24 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import './RootstockGovernor.sol';
 import './Awards.sol';
-import 'hardhat/console.sol';
 
-contract Competitions is Ownable {
+contract Competition is Ownable {
   struct Team {
     uint256 votes;
     address addr;
   }
-  struct Competition {
-    address[] teams; // participants
-    string name; // description
-    uint256 proposalId; // corresponding proposal on the Governor
-  }
-  // competitions are identified by description hash
-  mapping(bytes32 => Competition) public competitions;
 
   RootstockGovernor public immutable governor;
   Awards public awards; // prizes NFT s/c
@@ -40,93 +31,17 @@ contract Competitions is Ownable {
     awards = _awards;
   }
 
-  // Initiates voting. Can be called only by the competition initiator.
-  function startCompetition(
-    address[] calldata teams,
-    string calldata name
-  ) external onlyOwner {
+  // Is called by the governor if voting reaches the quorum
+  function onCompetitionEnd(
+    string calldata contestName,
+    address[] calldata teams
+  ) external onlyGovernor {
     require(
       teams.length > 1 && teams.length <= 250,
       'Competitions: Min 2, max 250 teams are allowed'
     );
-    bytes32 nameHash = keccak256(abi.encodePacked(name));
-    Competition storage contest = competitions[nameHash];
-    require(
-      contest.teams.length == 0,
-      'Competitions: Competition has already started'
-    );
-    contest.teams = teams;
-    contest.name = name;
-    (
-      address[] memory targets,
-      uint256[] memory amounts,
-      bytes[] memory calldatas
-    ) = getProposal(nameHash);
-    contest.proposalId = governor.proposeBallot(
-      targets,
-      amounts,
-      calldatas,
-      name
-    );
-  }
-
-  /* 
-  Prepares proposal parameters for creating/executing competition
-  proposals on the governor
-   */
-  function getProposal(
-    bytes32 nameHash
-  )
-    private
-    view
-    returns (
-      address[] memory targets,
-      uint256[] memory amounts,
-      bytes[] memory calldatas
-    )
-  {
-    targets = new address[](1);
-    targets[0] = address(this);
-    amounts = new uint256[](1);
-    amounts[0] = 0;
-    calldatas = new bytes[](1);
-    calldatas[0] = abi.encodeWithSelector(
-      this.onCompetitionEnd.selector,
-      nameHash
-    );
-  }
-
-  /* 
-  Voters should call this function to know what proposal ID 
-  corresponds to the competition name they are going to vote for
-   */
-  function getProposalId(
-    string calldata competitionName
-  ) external view returns (uint256) {
-    bytes32 nameHash = keccak256(abi.encodePacked(competitionName));
-    return competitions[nameHash].proposalId;
-  }
-
-  // Is called by the competition initiator (owner) to execute competition proposal
-  function endCompetition(string calldata name) external onlyOwner {
-    bytes32 nameHash = keccak256(abi.encodePacked(name));
-    Competition storage contest = competitions[nameHash];
-    require(
-      governor.state(contest.proposalId) == IGovernor.ProposalState.Succeeded,
-      'Competitions: Proposal is not ready to be executed'
-    );
-    (
-      address[] memory targets,
-      uint256[] memory amounts,
-      bytes[] memory calldatas
-    ) = getProposal(nameHash);
-    governor.execute(targets, amounts, calldatas, nameHash);
-  }
-
-  // Is called by the governor if voting reaches the quorum
-  function onCompetitionEnd(bytes32 nameHash) external onlyGovernor {
-    Competition storage contest = competitions[nameHash];
-    Team[][] memory winners = findWinners(contest.proposalId, contest.teams);
+    uint256 proposalId = getProposalId(contestName, teams);
+    Team[][] memory winners = findWinners(proposalId, teams);
     // runs 3 times, iterates ranks
     for (uint8 rank = 0; rank < winners.length; rank++) {
       // runs as many times as there are teams in the same rank (1-few)
@@ -134,13 +49,32 @@ contract Competitions is Ownable {
         if (winners[rank][i].votes == 0) return;
         // mint NFTs
         awards.givePrize(
-          contest.name,
+          contestName,
           winners[rank][i].votes,
           winners[rank][i].addr,
           rank + 1
         );
       }
     }
+  }
+
+  // calculates successful competition ID
+  function getProposalId(
+    string calldata contestName,
+    address[] calldata teams
+  ) private view returns (uint256) {
+    address[] memory targets = new address[](1);
+    targets[0] = address(this);
+    uint256[] memory amounts = new uint256[](1);
+    amounts[0] = 0;
+    bytes[] memory calldatas = new bytes[](1);
+    calldatas[0] = abi.encodeWithSelector(
+      this.onCompetitionEnd.selector,
+      contestName,
+      teams
+    );
+    bytes32 descHash = keccak256(abi.encodePacked(contestName));
+    return governor.hashProposal(targets, amounts, calldatas, descHash);
   }
 
   /* Finds winning teams.

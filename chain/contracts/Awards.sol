@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import './Competitions.sol';
+import './Competition.sol';
 
 /* 
 This is a possible implementation of NFT smart contract which mints
@@ -19,13 +19,13 @@ contract Awards is ERC721 {
   }
   mapping(uint256 => Prize) public prizes;
 
-  Competitions immutable competitions;
+  Competition immutable competitions;
 
-  constructor(Competitions _competitions) ERC721('AwardToken', 'AWD') {
+  constructor(Competition _competitions) ERC721('AwardToken', 'AWD') {
     competitions = _competitions;
   }
 
-  modifier onlyCompetitions() {
+  modifier onlyCompetition() {
     require(
       msg.sender == address(competitions),
       'Can be called only by Competitions'
@@ -39,7 +39,7 @@ contract Awards is ERC721 {
     uint256 votingResult,
     address to,
     uint8 rank
-  ) external onlyCompetitions {
+  ) external onlyCompetition {
     // calculating a unique token ID
     uint256 tokenId = uint256(
       keccak256(abi.encodePacked(competitionName, to, rank))
