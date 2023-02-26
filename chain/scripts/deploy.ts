@@ -3,7 +3,7 @@ import { deploy } from '../util';
 
 async function main() {
   try {
-    const { voteToken, governor, competitions, awards } = await deploy();
+    const { voteToken, governor, competition, awards } = await deploy();
     console.log(
       `VoteToken was deployed at ${hre.network.name} with address ${voteToken.address}`,
     );
@@ -11,7 +11,7 @@ async function main() {
       `RootstockGovernor was deployed at ${hre.network.name} with address ${governor.address}`,
     );
     console.log(
-      `Competitions was deployed at ${hre.network.name} with address ${competitions.address}`,
+      `Competition was deployed at ${hre.network.name} with address ${competition.address}`,
     );
     console.log(
       `Awards was deployed at ${hre.network.name} with address ${awards.address}`,
