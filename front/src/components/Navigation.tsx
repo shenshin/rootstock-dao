@@ -8,7 +8,15 @@ function Navigation() {
         <NavLink to="delegate">Delegate VP</NavLink>
       </li>
       <li>
-        <NavLink to="propose">Create proposal</NavLink>
+        Create proposal
+        <ul className="nav-bar-nested-1">
+          <li>
+            <NavLink to="propose-rbtc-transfer">RBTC transfer</NavLink>
+          </li>
+          <li>
+            <NavLink to="propose-competition">Competition</NavLink>
+          </li>
+        </ul>
       </li>
       <li>
         <NavLink to="state">Proposal state</NavLink>

@@ -1,12 +1,18 @@
 import { useState } from 'react';
-import { ProposalContext, IProposal } from '../context/proposalContext';
+import {
+  ProposalContext,
+  ITransfer,
+  ICompetition,
+} from '../context/proposalContext';
 
 interface ProposalProviderProps {
   children: React.ReactNode;
 }
 
 function ProposalProvider({ children }: ProposalProviderProps) {
-  const [proposals, setProposals] = useState<Array<IProposal>>([]);
+  const [proposals, setProposals] = useState<Array<ITransfer | ICompetition>>(
+    [],
+  );
   return (
     <ProposalContext.Provider value={{ proposals, setProposals }}>
       {children}

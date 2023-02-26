@@ -17,10 +17,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Ownable__factory>;
     getContractFactory(
-      name: "GovernorCountingSimple",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.GovernorCountingSimple__factory>;
-    getContractFactory(
       name: "GovernorSettings",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.GovernorSettings__factory>;
@@ -85,6 +81,18 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.DoubleEndedQueue__factory>;
     getContractFactory(
+      name: "Awards",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Awards__factory>;
+    getContractFactory(
+      name: "Competitions",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Competitions__factory>;
+    getContractFactory(
+      name: "GovernorCountingUniversal",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.GovernorCountingUniversal__factory>;
+    getContractFactory(
       name: "RootstockGovernor",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.RootstockGovernor__factory>;
@@ -98,11 +106,6 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Ownable>;
-    getContractAt(
-      name: "GovernorCountingSimple",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.GovernorCountingSimple>;
     getContractAt(
       name: "GovernorSettings",
       address: string,
@@ -183,6 +186,21 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.DoubleEndedQueue>;
+    getContractAt(
+      name: "Awards",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Awards>;
+    getContractAt(
+      name: "Competitions",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Competitions>;
+    getContractAt(
+      name: "GovernorCountingUniversal",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.GovernorCountingUniversal>;
     getContractAt(
       name: "RootstockGovernor",
       address: string,

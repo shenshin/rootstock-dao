@@ -1,7 +1,11 @@
 import { useContext, useState } from 'react';
 import { utils } from 'ethers';
 import { Web3Context } from '../context/web3Context';
-import { ProposalContext } from '../context/proposalContext';
+import {
+  ProposalContext,
+  ITransfer,
+  getProposalId,
+} from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 import './Propose.css';
 
@@ -40,10 +44,20 @@ function Propose() {
       await tx.wait();
       setLoading(`Proposal was created`);
       // save created proposal to context
-      setProposals((old) => [
-        ...old,
-        { addresses, amounts, calldatas, description },
-      ]);
+      const proposalId = getProposalId(
+        addresses,
+        amounts,
+        calldatas,
+        description,
+      );
+      const newProposal: ITransfer = {
+        description,
+        proposalId,
+        addresses,
+        amounts,
+        calldatas,
+      };
+      setProposals((old) => [...old, newProposal]);
     } catch (error) {
       if (error instanceof Error) setErrorMessage(error.message);
     }
@@ -51,7 +65,7 @@ function Propose() {
 
   return (
     <div>
-      <h1>Proposal creation</h1>
+      <h1>Create RBTC transfer proposal</h1>
       <p>The proposal is to send some RBTC to a target address</p>
       <label className="proposal-param" htmlFor="target-addr">
         Target address

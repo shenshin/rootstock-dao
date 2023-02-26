@@ -3,7 +3,7 @@ import { Web3Context } from '../context/web3Context';
 import {
   ProposalContext,
   ProposalState,
-  getProposalId,
+  // isCompetition,
 } from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 
@@ -25,7 +25,7 @@ function Vote() {
     try {
       setErrorMessage('');
       const { governor } = getContracts(provider!);
-      const proposalId = getProposalId(proposals[proposalIndex]);
+      const { proposalId } = proposals[proposalIndex];
       if ((await governor.state(proposalId)) !== ProposalState.Active)
         throw new Error(`You cannot vote for this proposal`);
       const tx = await governor.castVote(proposalId, voteIndex);
