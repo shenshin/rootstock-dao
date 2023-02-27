@@ -33,6 +33,11 @@ export enum VoteOptions {
   Abstain,
 }
 
+export enum CountingType {
+  Simple, // each vote is either for, against, or abstain
+  Ballot, // each vote is for a single choice out of multiple choices
+}
+
 export async function deploy() {
   // deploy VoteToken NFT smart contract
   const VoteTokenFactory = await hre.ethers.getContractFactory('VoteToken');

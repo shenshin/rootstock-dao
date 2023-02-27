@@ -9,7 +9,13 @@ import {
   Competition,
   Awards,
 } from '../typechain-types';
-import { Proposal, ProposalState, getProposalId, deploy } from '../util';
+import {
+  Proposal,
+  ProposalState,
+  getProposalId,
+  deploy,
+  CountingType,
+} from '../util';
 
 describe('Competitions happy path', () => {
   let governor: RootstockGovernor;
@@ -52,7 +58,7 @@ describe('Competitions happy path', () => {
     proposal = [[competition.address], [0], [callback], competitionName];
     proposalId = getProposalId(proposal);
     // start the competition
-    const tx = await governor.proposeBallot(...proposal);
+    const tx = await governor.createProposal(...proposal, CountingType.Ballot);
     /* 
     ProposalCreated event signature:
     ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 startBlock, uint256 endBlock, string description)
@@ -108,13 +114,16 @@ describe('Competitions happy path', () => {
   });
 
   it('votes should be recorded correctly', async () => {
-    const proposalVotes = 'proposalVotes(uint256,uint8)';
-    expect(await governor[proposalVotes](proposalId, 0)).to.equal(0);
-    expect(await governor[proposalVotes](proposalId, 1)).to.equal(2); // 3rd
-    expect(await governor[proposalVotes](proposalId, 2)).to.equal(3); // 2nd
-    expect(await governor[proposalVotes](proposalId, 3)).to.equal(2); // 3rd
-    expect(await governor[proposalVotes](proposalId, 4)).to.equal(1);
-    expect(await governor[proposalVotes](proposalId, 5)).to.equal(4); // 1st
+    const votingResults = await governor['proposalVotes(uint256,uint8)'](
+      proposalId,
+      5,
+    );
+    expect(votingResults[0]).to.equal(0);
+    expect(votingResults[1]).to.equal(2); // 3rd
+    expect(votingResults[2]).to.equal(3); // 2nd
+    expect(votingResults[3]).to.equal(2); // 3rd
+    expect(votingResults[4]).to.equal(1);
+    expect(votingResults[5]).to.equal(4); // 1st
   });
 
   it('should execute the proposal and mint NFTs to the winners', async () => {

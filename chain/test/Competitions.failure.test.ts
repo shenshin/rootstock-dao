@@ -1,7 +1,13 @@
 import hre from 'hardhat';
 import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
-import { deploy, getProposalId, Proposal, ProposalState } from '../util';
+import {
+  deploy,
+  getProposalId,
+  Proposal,
+  ProposalState,
+  CountingType,
+} from '../util';
 import { RootstockGovernor, Competition, VoteToken } from '../typechain-types';
 
 async function startCompetition(
@@ -25,7 +31,7 @@ async function startCompetition(
   ];
   const proposalId = getProposalId(proposal);
   // start the competition
-  const tx = await governor.proposeBallot(...proposal);
+  const tx = await governor.createProposal(...proposal, CountingType.Ballot);
   await tx.wait();
   await mine(2);
   return { proposal, teams, proposalId };
@@ -124,7 +130,10 @@ describe('Competition error path', () => {
     ];
     const proposalId = getProposalId(proposal);
     // start competition
-    const propose = await governor.proposeBallot(...proposal);
+    const propose = await governor.createProposal(
+      ...proposal,
+      CountingType.Ballot,
+    );
     await propose.wait();
     await mine(2);
     const vote = await governor.castVote(proposalId, 10);

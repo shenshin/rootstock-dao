@@ -12,14 +12,14 @@ Voting system is represented by smart contracts:
 
 - after deployment Competition owner has to link Competition s/c with Awards s/c by calling `setAwards` function
 - 250 teams can participate in a competition
-- a competition has to be [encoded as a usual Governor proposal](https://docs.openzeppelin.com/contracts/4.x/api/governance#IGovernor-propose-address---uint256---bytes---string-), where:
+- a new competition is started by calling RootstockGovernor's `createProposal` with 5 parameters [See details](https://docs.openzeppelin.com/contracts/4.x/api/governance#IGovernor-propose-address---uint256---bytes---string-):
   1. targets - `Competition` s/c address
   2. values - 0 (not sending any RBTC)
   3. calldatas - encoded call of Competition's function `onCompetitionEnd` with 2 parameters:
     - competition description, which has to be unique
     - array of participant addresses
   4. competition description (one more time)
-- a new competition is started by calling Competition's `propose` with these 4 parameters
+  5. Counting type (Simple or Ballot)
 - voting starts 1 block after proposal initiation 
 - the voting lasts a certain time (parameter of the Governor) and ends successfully if total votes number is more than a certain % of VoteToken holders (quorum, also Governor parameter)
 - voters can vote once for one of the teams in competition proposal by calling `castVote(uint256 proposalId, uint8 teamNumber)` on the Governor. 
