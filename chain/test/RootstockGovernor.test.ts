@@ -1,4 +1,5 @@
 import hre from 'hardhat';
+import { BigNumber } from 'ethers';
 import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { RootstockGovernor, VoteToken } from '../typechain-types';
@@ -14,6 +15,7 @@ describe('Governor', () => {
   let governor: RootstockGovernor;
   let voteToken: VoteToken;
   let proposal: Proposal;
+  let proposalId: BigNumber;
 
   before(async () => {
     const contracts = await loadFixture(deploy);
@@ -39,30 +41,35 @@ describe('Governor', () => {
       ['0x'],
       description,
     ];
+    proposalId = getProposalId(proposal);
     const tx = await governor.propose(...proposal);
     await expect(tx).to.emit(governor, 'ProposalCreated');
   });
 
   it('proposal should be active', async () => {
     await mine(2);
-    const propId = getProposalId(proposal);
-    const state = await governor.state(propId);
+    const state = await governor.state(proposalId);
     expect(state).to.equal(ProposalState.Active);
   });
 
   it('should vote for proposal', async () => {
     const [voter] = await hre.ethers.getSigners();
-    const propId = getProposalId(proposal);
-    const tx = await governor.castVote(propId, VoteOptions.For);
+    const tx = await governor.castVote(proposalId, VoteOptions.For);
     await expect(tx)
       .to.emit(governor, 'VoteCast')
-      .withArgs(voter.address, propId, VoteOptions.For, 1, '');
+      .withArgs(voter.address, proposalId, VoteOptions.For, 1, '');
+  });
+
+  it('should count the vote', async () => {
+    const votes = await governor['proposalVotes(uint256)'](proposalId);
+    expect(votes.forVotes).to.equal(1);
+    expect(votes.againstVotes).to.equal(0);
+    expect(votes.abstainVotes).to.equal(0);
   });
 
   it('proposal should be successful', async () => {
     await mine(20);
-    const propId = getProposalId(proposal);
-    const state = await governor.state(propId);
+    const state = await governor.state(proposalId);
     expect(state).to.equal(ProposalState.Succeeded);
   });
 
