@@ -8,7 +8,7 @@ import RbtcTransferProposal from './components/RbtcTransferProposal';
 import Vote from './components/Vote';
 import State from './components/State';
 import Execute from './components/Execute';
-import Competition from './components/Competition';
+import CompetitionProposal from './components/CompetitionProposal';
 import './App.css';
 
 function App() {
@@ -31,7 +31,7 @@ function App() {
           path="propose-rbtc-transfer"
           element={<RbtcTransferProposal />}
         />
-        <Route path="propose-competition" element={<Competition />} />
+        <Route path="propose-competition" element={<CompetitionProposal />} />
         <Route path="vote" element={<Vote />} />
         <Route path="state" element={<State />} />
         <Route path="execute" element={<Execute />} />

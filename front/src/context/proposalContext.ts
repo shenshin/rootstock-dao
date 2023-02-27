@@ -1,12 +1,18 @@
 import { createContext } from 'react';
 import { ethers, BigNumber } from 'ethers';
 
+export enum ProposalType {
+  Simple,
+  Ballot,
+}
+
 export interface IProposal {
   description: string;
   proposalId: BigNumber;
   addresses: string[];
   amounts: BigNumber[];
   calldatas: string[];
+  type: ProposalType;
 }
 
 export enum ProposalState {

@@ -1,6 +1,11 @@
 import { useContext, useState } from 'react';
 import { Web3Context } from '../context/web3Context';
-import { ProposalContext, ProposalState } from '../context/proposalContext';
+import {
+  ProposalContext,
+  ProposalState,
+  IProposal,
+  ProposalType,
+} from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 
 enum VoteOptions {
@@ -31,6 +36,16 @@ function Vote() {
     } catch (error) {
       if (error instanceof Error) setErrorMessage(error.message);
     }
+  };
+
+  const getTeams = (proposal: IProposal): string[] => {
+    if (proposal.type === ProposalType.Simple) return [];
+    const { competition } = getContracts(provider!);
+    const participants: string[] = competition.interface.decodeFunctionData(
+      'onCompetitionEnd',
+      proposal.calldatas[0],
+    ).teams;
+    return participants;
   };
 
   return (
@@ -72,6 +87,12 @@ function Vote() {
             </div>
             <button type="button" onClick={vote}>
               Cast vote
+            </button>
+            <button
+              type="button"
+              onClick={() => getTeams(proposals[proposalIndex])}
+            >
+              Check type
             </button>
           </>
         )}

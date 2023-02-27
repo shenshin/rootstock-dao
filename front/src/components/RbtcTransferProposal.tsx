@@ -1,7 +1,11 @@
 import { useContext, useState } from 'react';
 import { utils } from 'ethers';
 import { Web3Context } from '../context/web3Context';
-import { ProposalContext, getProposalId } from '../context/proposalContext';
+import {
+  ProposalContext,
+  getProposalId,
+  ProposalType,
+} from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 import './RbtcTransferProposal.css';
 
@@ -54,6 +58,7 @@ function Propose() {
           addresses,
           amounts,
           calldatas,
+          type: ProposalType.Simple,
         }),
       );
     } catch (error) {

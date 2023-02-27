@@ -1,10 +1,14 @@
 import { useContext, useState } from 'react';
 import { BigNumber } from 'ethers';
 import { Web3Context } from '../context/web3Context';
-import { ProposalContext, getProposalId } from '../context/proposalContext';
+import {
+  ProposalContext,
+  getProposalId,
+  ProposalType,
+} from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
-import deployedCompetition from '../contracts/Competitions.rsktestnet.address.json';
-import './Competition.css';
+import deployedCompetition from '../contracts/Competition.rsktestnet.address.json';
+import './CompetitionProposal.css';
 
 interface ITeamEntry {
   address: string;
@@ -82,6 +86,7 @@ function CompetitionProposal() {
           addresses,
           amounts,
           calldatas,
+          type: ProposalType.Ballot,
         }),
       );
     } catch (error) {
@@ -116,6 +121,7 @@ function CompetitionProposal() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           name="competition-description"
+          placeholder="enter unique description"
         />
       </label>
       {teams.map((team, i) => (

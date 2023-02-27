@@ -399,25 +399,6 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    name: "countingTypes",
-    outputs: [
-      {
-        internalType: "enum GovernorCountingUniversal.CountingType",
-        name: "",
-        type: "uint8",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
         internalType: "address[]",
         name: "targets",
         type: "address[]",

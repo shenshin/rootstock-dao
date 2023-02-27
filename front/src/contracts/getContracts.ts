@@ -12,7 +12,7 @@ import {
 
 import voteTokenDeployed from './VoteToken.rsktestnet.address.json';
 import governorDeployed from './RootstockGovernor.rsktestnet.address.json';
-import competitionsDeployed from './Competitions.rsktestnet.address.json';
+import competitionDeployed from './Competition.rsktestnet.address.json';
 import awardsDeployed from './Awards.rsktestnet.address.json';
 
 export interface Contracts {
@@ -37,7 +37,7 @@ export function getContracts(
     provider.getSigner(0),
   ) as RootstockGovernor;
   const competition = new ethers.Contract(
-    competitionsDeployed.address.toLowerCase(),
+    competitionDeployed.address.toLowerCase(),
     Competition__factory.abi,
     provider.getSigner(0),
   ) as Competition;

@@ -38,7 +38,6 @@ export interface RootstockGovernorInterface extends utils.Interface {
     "castVoteWithReason(uint256,uint8,string)": FunctionFragment;
     "castVoteWithReasonAndParams(uint256,uint8,string,bytes)": FunctionFragment;
     "castVoteWithReasonAndParamsBySig(uint256,uint8,string,bytes,uint8,bytes32,bytes32)": FunctionFragment;
-    "countingTypes(uint256)": FunctionFragment;
     "execute(address[],uint256[],bytes[],bytes32)": FunctionFragment;
     "getVotes(address,uint256)": FunctionFragment;
     "getVotesWithParams(address,uint256,bytes)": FunctionFragment;
@@ -82,7 +81,6 @@ export interface RootstockGovernorInterface extends utils.Interface {
       | "castVoteWithReason"
       | "castVoteWithReasonAndParams"
       | "castVoteWithReasonAndParamsBySig"
-      | "countingTypes"
       | "execute"
       | "getVotes"
       | "getVotesWithParams"
@@ -170,10 +168,6 @@ export interface RootstockGovernorInterface extends utils.Interface {
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BytesLike>
     ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "countingTypes",
-    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
@@ -363,10 +357,6 @@ export interface RootstockGovernorInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "castVoteWithReasonAndParamsBySig",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "countingTypes",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
@@ -687,11 +677,6 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    countingTypes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[number]>;
-
     execute(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
@@ -907,11 +892,6 @@ export interface RootstockGovernor extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  countingTypes(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<number>;
-
   execute(
     targets: PromiseOrValue<string>[],
     values: PromiseOrValue<BigNumberish>[],
@@ -1126,11 +1106,6 @@ export interface RootstockGovernor extends BaseContract {
       s: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    countingTypes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<number>;
 
     execute(
       targets: PromiseOrValue<string>[],
@@ -1447,11 +1422,6 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    countingTypes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     execute(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
@@ -1662,11 +1632,6 @@ export interface RootstockGovernor extends BaseContract {
       r: PromiseOrValue<BytesLike>,
       s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    countingTypes(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     execute(
