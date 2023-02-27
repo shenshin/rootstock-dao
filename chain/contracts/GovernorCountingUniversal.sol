@@ -41,7 +41,7 @@ abstract contract GovernorCountingUniversal is Governor {
     uint256[] memory values,
     bytes[] memory calldatas,
     string memory description
-  ) public virtual returns (uint256 proposalId) {
+  ) internal virtual returns (uint256 proposalId) {
     proposalId = propose(targets, values, calldatas, description);
     _proposalVotes[proposalId].countingType = CountingType.Ballot;
   }
@@ -70,7 +70,7 @@ abstract contract GovernorCountingUniversal is Governor {
     ProposalVote storage proposalVote = _proposalVotes[proposalId];
     require(
       proposalVote.countingType == CountingType.Simple,
-      'GovernorCountingUniversal: Ballot mode. Use proposalVotes(uint256 proposalId, uint8 candidate)'
+      'GovernorCountingUniversal: Can be called only in Simple mode'
     );
     return (
       proposalVote.candidateVotes[0],
@@ -80,18 +80,30 @@ abstract contract GovernorCountingUniversal is Governor {
   }
 
   /**
-   * @dev `proposalVotes(uint256)` overload for Ballot counting mode
+   * @dev `proposalVotes(uint256)` overload for Ballot counting mode. 
+   * Returns voting results for teams from 0 to `teams`
+   * @param proposalId - Proposal ID
+   * @param teams - number of voting results to return.
+   * e.g. 5 returns voting results for teams 0 - 5, where 0 is assumed `Abstain`
+   * @return votes voting results for `teams` teams
    */
   function proposalVotes(
     uint256 proposalId,
-    uint8 candidate
-  ) public view virtual returns (uint256 candidateVotes) {
+    uint8 teams
+  ) public view virtual returns (uint256[] memory votes) {
+    require(
+      teams > 0 && teams <= 250,
+      'GovernorCountingUniversal: teams out of range'
+    );
     ProposalVote storage proposalVote = _proposalVotes[proposalId];
     require(
       proposalVote.countingType == CountingType.Ballot,
-      'GovernorCountingUniversal: Simple mode. Use proposalVotes(uint256 proposalId)'
+      'GovernorCountingUniversal: Can be called only in Ballot mode)'
     );
-    return proposalVote.candidateVotes[candidate];
+    votes = new uint256[](teams + 1);
+    for (uint8 i = 0; i <= teams; i++) {
+      votes[i] = proposalVote.candidateVotes[i];
+    }
   }
 
   /**

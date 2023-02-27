@@ -9,6 +9,7 @@ import {
   ProposalState,
   VoteOptions,
   getProposalId,
+  CountingType,
 } from '../util';
 
 describe('Governor', () => {
@@ -42,7 +43,7 @@ describe('Governor', () => {
       description,
     ];
     proposalId = getProposalId(proposal);
-    const tx = await governor.propose(...proposal);
+    const tx = await governor.createProposal(...proposal, CountingType.Simple);
     await expect(tx).to.emit(governor, 'ProposalCreated');
   });
 

@@ -8,7 +8,7 @@ import {
   Competition,
   Awards,
 } from '../typechain-types';
-import { deploy, Proposal, getProposalId } from '../util';
+import { deploy, Proposal, getProposalId, CountingType } from '../util';
 
 /*
 This set of tests is for a scenario where there are multiple teams that are tied in 1st place
@@ -55,7 +55,7 @@ describe('Competitions. Sorting team results. Finding winners', () => {
     proposal = [[competition.address], [0], [callback], competitionName];
     proposalId = getProposalId(proposal);
     // start the competition
-    const tx = await governor.proposeBallot(...proposal);
+    const tx = await governor.createProposal(...proposal, CountingType.Ballot);
     await expect(tx).to.emit(governor, 'ProposalCreated');
   });
 
@@ -96,14 +96,17 @@ describe('Competitions. Sorting team results. Finding winners', () => {
   });
 
   it('teams not voted for should not have votes', async () => {
-    const proposalVotes = 'proposalVotes(uint256,uint8)';
-    expect(await governor[proposalVotes](proposalId, 1)).to.equal(0);
-    expect(await governor[proposalVotes](proposalId, 2)).to.equal(0);
-    expect(await governor[proposalVotes](proposalId, 3)).to.equal(0);
-    expect(await governor[proposalVotes](proposalId, 6)).to.equal(0);
-    expect(await governor[proposalVotes](proposalId, 7)).to.equal(0);
-    expect(await governor[proposalVotes](proposalId, 8)).to.equal(0);
-    expect(await governor[proposalVotes](proposalId, 9)).to.equal(0);
+    const proposalVotes = await governor['proposalVotes(uint256,uint8)'](
+      proposalId,
+      10,
+    );
+    expect(proposalVotes[0]).to.equal(0);
+    expect(proposalVotes[2]).to.equal(0);
+    expect(proposalVotes[3]).to.equal(0);
+    expect(proposalVotes[6]).to.equal(0);
+    expect(proposalVotes[7]).to.equal(0);
+    expect(proposalVotes[8]).to.equal(0);
+    expect(proposalVotes[9]).to.equal(0);
   });
 
   it('should execute the proposal and mint NFTs to the winners', async () => {
