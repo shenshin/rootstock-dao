@@ -1,13 +1,14 @@
 import hre from 'hardhat';
+import { BigNumber } from 'ethers';
 import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import {
-  GovernorBallot,
+  RootstockGovernor,
   VoteToken,
-  Competitions,
+  Competition,
   Awards,
 } from '../typechain-types';
-import { deploy } from './util';
+import { deploy, Proposal, getProposalId } from '../util';
 
 /*
 This set of tests is for a scenario where there are multiple teams that are tied in 1st place
@@ -15,18 +16,20 @@ because they have the same number of votes.
 Additionally all other teams have zero votes, and thus there is no 2nd place or 3rd place prizes.
 */
 describe('Competitions. Sorting team results. Finding winners', () => {
-  let governor: GovernorBallot;
+  let governor: RootstockGovernor;
   let voteToken: VoteToken;
-  let competitions: Competitions;
+  let competition: Competition;
   let awards: Awards;
   let teams: string[];
   let competitionName: string;
+  let proposal: Proposal;
+  let proposalId: BigNumber;
 
   before(async () => {
     const contracts = await loadFixture(deploy);
     governor = contracts.governor;
     voteToken = contracts.voteToken;
-    competitions = contracts.competitions;
+    competition = contracts.competition;
     awards = contracts.awards;
   });
 
@@ -45,7 +48,14 @@ describe('Competitions. Sorting team results. Finding winners', () => {
     competitionName = 'Competition 1';
     // 10 teams are participating
     teams = (await hre.ethers.getSigners()).slice(1, 11).map((s) => s.address);
-    const tx = competitions.startCompetition(teams, competitionName);
+    const callback = competition.interface.encodeFunctionData(
+      'onCompetitionEnd',
+      [competitionName, teams],
+    );
+    proposal = [[competition.address], [0], [callback], competitionName];
+    proposalId = getProposalId(proposal);
+    // start the competition
+    const tx = await governor.proposeBallot(...proposal);
     await expect(tx).to.emit(governor, 'ProposalCreated');
   });
 
@@ -57,13 +67,12 @@ describe('Competitions. Sorting team results. Finding winners', () => {
     */
     await mine(2);
     const signers = await hre.ethers.getSigners();
-    const propId = await competitions.getProposalId(competitionName);
     const vote = async (signerIndex: number, suppport: number) => {
       await expect(
-        governor.connect(signers[signerIndex]).castVote(propId, suppport),
+        governor.connect(signers[signerIndex]).castVote(proposalId, suppport),
       )
         .to.emit(governor, 'VoteCast')
-        .withArgs(signers[signerIndex].address, propId, suppport, 1, '');
+        .withArgs(signers[signerIndex].address, proposalId, suppport, 1, '');
     };
     // 5 voters give votes to the team 5
     await vote(0, 5);
@@ -87,19 +96,24 @@ describe('Competitions. Sorting team results. Finding winners', () => {
   });
 
   it('teams not voted for should not have votes', async () => {
-    const propId = await competitions.getProposalId(competitionName);
-    expect(await governor.proposalVotes(propId, 1)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 2)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 3)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 6)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 7)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 8)).to.equal(0);
-    expect(await governor.proposalVotes(propId, 9)).to.equal(0);
+    const proposalVotes = 'proposalVotes(uint256,uint8)';
+    expect(await governor[proposalVotes](proposalId, 1)).to.equal(0);
+    expect(await governor[proposalVotes](proposalId, 2)).to.equal(0);
+    expect(await governor[proposalVotes](proposalId, 3)).to.equal(0);
+    expect(await governor[proposalVotes](proposalId, 6)).to.equal(0);
+    expect(await governor[proposalVotes](proposalId, 7)).to.equal(0);
+    expect(await governor[proposalVotes](proposalId, 8)).to.equal(0);
+    expect(await governor[proposalVotes](proposalId, 9)).to.equal(0);
   });
 
   it('should execute the proposal and mint NFTs to the winners', async () => {
     await mine(20);
-    const tx = await competitions.endCompetition(competitionName);
+    const [targets, values, calldatas] = proposal;
+    const descHash = hre.ethers.utils.solidityKeccak256(
+      ['string'],
+      [competitionName],
+    );
+    const tx = governor.execute(targets, values, calldatas, descHash);
     await expect(tx).to.emit(governor, 'ProposalExecuted');
     await expect(tx).to.emit(awards, 'Transfer');
   });

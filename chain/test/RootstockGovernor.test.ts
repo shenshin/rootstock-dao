@@ -1,58 +1,24 @@
 import hre from 'hardhat';
-import { BigNumberish, BytesLike, BigNumber } from 'ethers';
-import { mine } from '@nomicfoundation/hardhat-network-helpers';
+import { mine, loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
 import { RootstockGovernor, VoteToken } from '../typechain-types';
-
-type Proposal = [string[], BigNumberish[], BytesLike[], string];
-enum VoteOptions {
-  Against,
-  For,
-  Abstain,
-}
-enum ProposalState {
-  Pending,
-  Active,
-  Canceled,
-  Defeated,
-  Succeeded,
-  Queued,
-  Expired,
-  Executed,
-}
+import {
+  deploy,
+  Proposal,
+  ProposalState,
+  VoteOptions,
+  getProposalId,
+} from '../util';
 
 describe('Governor', () => {
   let governor: RootstockGovernor;
   let voteToken: VoteToken;
   let proposal: Proposal;
 
-  const deploy = async () => {
-    // deploy vote token
-    const VTFactory = await hre.ethers.getContractFactory('VoteToken');
-    voteToken = await VTFactory.deploy();
-    await voteToken.deployed();
-    // mint NFTs
-    const signers = (await hre.ethers.getSigners()).slice(0, 5);
-    const mintTx = await voteToken.safeMintBatch(signers.map((s) => s.address));
-    await mintTx.wait();
-    // deploy Governor
-    const GovFactory = await hre.ethers.getContractFactory('RootstockGovernor');
-    governor = await GovFactory.deploy(voteToken.address);
-    await governor.deployed();
-    signers[0].sendTransaction({
-      to: governor.address,
-      value: hre.ethers.utils.parseEther('1'),
-    });
-  };
-
-  const getProposalID = (): Promise<BigNumber> => {
-    const [targets, values, calldatas, desc] = proposal;
-    const descHash = hre.ethers.utils.solidityKeccak256(['string'], [desc]);
-    return governor.hashProposal(targets, values, calldatas, descHash);
-  };
-
   before(async () => {
-    await deploy();
+    const contracts = await loadFixture(deploy);
+    governor = contracts.governor;
+    voteToken = contracts.voteToken;
   });
 
   it('should delegate voting power', async () => {
@@ -79,14 +45,14 @@ describe('Governor', () => {
 
   it('proposal should be active', async () => {
     await mine(2);
-    const propId = await getProposalID();
+    const propId = getProposalId(proposal);
     const state = await governor.state(propId);
     expect(state).to.equal(ProposalState.Active);
   });
 
   it('should vote for proposal', async () => {
     const [voter] = await hre.ethers.getSigners();
-    const propId = await getProposalID();
+    const propId = getProposalId(proposal);
     const tx = await governor.castVote(propId, VoteOptions.For);
     await expect(tx)
       .to.emit(governor, 'VoteCast')
@@ -95,7 +61,7 @@ describe('Governor', () => {
 
   it('proposal should be successful', async () => {
     await mine(20);
-    const propId = await getProposalID();
+    const propId = getProposalId(proposal);
     const state = await governor.state(propId);
     expect(state).to.equal(ProposalState.Succeeded);
   });
