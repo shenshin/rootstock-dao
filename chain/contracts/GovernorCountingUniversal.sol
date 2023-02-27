@@ -5,19 +5,19 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/governance/Governor.sol';
 
 abstract contract GovernorCountingUniversal is Governor {
+  enum CountingType {
+    Simple, // each vote is either for, against, or abstain
+    Ballot // each vote is for a single choice out of multiple choices
+  }
+
   struct ProposalVote {
+    CountingType countingType;
     uint256 totalVotes;
     mapping(uint8 => uint256) candidateVotes;
     mapping(address => bool) hasVoted;
   }
-  mapping(uint256 => ProposalVote) private _proposalVotes;
 
-  enum CountingType {
-    Simple,
-    Ballot
-  }
-  // counting types for proposal IDs
-  mapping(uint256 => CountingType) public countingTypes;
+  mapping(uint256 => ProposalVote) private _proposalVotes;
 
   /**
    * @dev See {IGovernor-COUNTING_MODE}.
@@ -43,7 +43,7 @@ abstract contract GovernorCountingUniversal is Governor {
     string memory description
   ) public virtual returns (uint256 proposalId) {
     proposalId = propose(targets, values, calldatas, description);
-    countingTypes[proposalId] = CountingType.Ballot;
+    _proposalVotes[proposalId].countingType = CountingType.Ballot;
   }
 
   /**
@@ -68,17 +68,15 @@ abstract contract GovernorCountingUniversal is Governor {
     returns (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes)
   {
     ProposalVote storage proposalVote = _proposalVotes[proposalId];
-    if (countingTypes[proposalId] == CountingType.Ballot) {
-      revert(
-        'GovernorCountingUniversal: Ballot mode. Use proposalVotes(uint256 proposalId, uint8 candidate)'
-      );
-    } else {
-      return (
-        proposalVote.candidateVotes[0],
-        proposalVote.candidateVotes[1],
-        proposalVote.candidateVotes[2]
-      );
-    }
+    require(
+      proposalVote.countingType == CountingType.Simple,
+      'GovernorCountingUniversal: Ballot mode. Use proposalVotes(uint256 proposalId, uint8 candidate)'
+    );
+    return (
+      proposalVote.candidateVotes[0],
+      proposalVote.candidateVotes[1],
+      proposalVote.candidateVotes[2]
+    );
   }
 
   /**
@@ -88,7 +86,12 @@ abstract contract GovernorCountingUniversal is Governor {
     uint256 proposalId,
     uint8 candidate
   ) public view virtual returns (uint256 candidateVotes) {
-    return _proposalVotes[proposalId].candidateVotes[candidate];
+    ProposalVote storage proposalVote = _proposalVotes[proposalId];
+    require(
+      proposalVote.countingType == CountingType.Ballot,
+      'GovernorCountingUniversal: Simple mode. Use proposalVotes(uint256 proposalId)'
+    );
+    return proposalVote.candidateVotes[candidate];
   }
 
   /**
@@ -98,7 +101,7 @@ abstract contract GovernorCountingUniversal is Governor {
     uint256 proposalId
   ) internal view virtual override returns (bool) {
     ProposalVote storage proposalVote = _proposalVotes[proposalId];
-    if (countingTypes[proposalId] == CountingType.Ballot) {
+    if (proposalVote.countingType == CountingType.Ballot) {
       return quorum(proposalSnapshot(proposalId)) <= proposalVote.totalVotes;
     } else {
       return
@@ -114,7 +117,7 @@ abstract contract GovernorCountingUniversal is Governor {
     uint256 proposalId
   ) internal view virtual override returns (bool) {
     ProposalVote storage proposalVote = _proposalVotes[proposalId];
-    if (countingTypes[proposalId] == CountingType.Ballot) {
+    if (proposalVote.countingType == CountingType.Ballot) {
       return _quorumReached(proposalId);
     } else {
       return proposalVote.candidateVotes[1] > proposalVote.candidateVotes[0];
@@ -132,16 +135,20 @@ abstract contract GovernorCountingUniversal is Governor {
     bytes memory // params
   ) internal virtual override {
     ProposalVote storage proposalVote = _proposalVotes[proposalId];
-
     require(
       !proposalVote.hasVoted[account],
       'GovernorCountingUniversal: vote already cast'
     );
+    require(
+      !(proposalVote.countingType == CountingType.Simple && support > 2),
+      'GovernorCountingUniversal: invalid vote'
+    );
     proposalVote.hasVoted[account] = true;
-    proposalVote.totalVotes += weight;
-    if (countingTypes[proposalId] != CountingType.Ballot && support > 2) {
-      revert('GovernorCountingUniversal: invalid vote');
-    }
     proposalVote.candidateVotes[support] += weight;
+    // recoding total votes casted
+    // In Ballot mode 0 (zero) is assumed `abstain`, so it's not counted in total votes
+    if (proposalVote.countingType == CountingType.Ballot && support == 0)
+      return;
+    proposalVote.totalVotes += weight;
   }
 }
