@@ -41,7 +41,7 @@ contract Competition is Ownable {
       'Competitions: Min 2, max 250 teams are allowed'
     );
     uint256 proposalId = governor.proposalIds(
-      keccak256(abi.encodePacked(contestName))
+      uint256(keccak256(abi.encodePacked(contestName)))
     );
     uint256[] memory votes = governor.proposalVotes(
       proposalId,

@@ -81,18 +81,18 @@ abstract contract GovernorCountingUniversal is Governor {
 
   /**
    * @dev `proposalVotes(uint256)` overload for Ballot counting mode. 
-   * Returns voting results for teams from 0 to `teams`
+   * Returns voting results for teams from 0 to `numTeams`
    * @param proposalId - Proposal ID
-   * @param teams - number of voting results to return.
+   * @param numTeams - number of voting results to return.
    * e.g. 5 returns voting results for teams 0 - 5, where 0 is assumed `Abstain`
-   * @return votes voting results for `teams` teams
+   * @return votes voting results for `numTeams` teams
    */
   function proposalVotes(
     uint256 proposalId,
-    uint8 teams
+    uint8 numTeams
   ) public view virtual returns (uint256[] memory votes) {
     require(
-      teams > 0 && teams <= 250,
+      numTeams > 0 && numTeams <= 250,
       'GovernorCountingUniversal: teams out of range'
     );
     ProposalVote storage proposalVote = _proposalVotes[proposalId];
@@ -100,8 +100,8 @@ abstract contract GovernorCountingUniversal is Governor {
       proposalVote.countingType == CountingType.Ballot,
       'GovernorCountingUniversal: Can be called only in Ballot mode)'
     );
-    votes = new uint256[](teams + 1);
-    for (uint8 i = 0; i <= teams; i++) {
+    votes = new uint256[](numTeams + 1);
+    for (uint8 i = 0; i <= numTeams; i++) {
       votes[i] = proposalVote.candidateVotes[i];
     }
   }
