@@ -726,16 +726,16 @@ const _abi = [
       },
       {
         internalType: "uint8",
-        name: "candidate",
+        name: "teams",
         type: "uint8",
       },
     ],
     name: "proposalVotes",
     outputs: [
       {
-        internalType: "uint256",
-        name: "candidateVotes",
-        type: "uint256",
+        internalType: "uint256[]",
+        name: "votes",
+        type: "uint256[]",
       },
     ],
     stateMutability: "view",
@@ -798,40 +798,6 @@ const _abi = [
       {
         internalType: "uint256",
         name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address[]",
-        name: "targets",
-        type: "address[]",
-      },
-      {
-        internalType: "uint256[]",
-        name: "values",
-        type: "uint256[]",
-      },
-      {
-        internalType: "bytes[]",
-        name: "calldatas",
-        type: "bytes[]",
-      },
-      {
-        internalType: "string",
-        name: "description",
-        type: "string",
-      },
-    ],
-    name: "proposeBallot",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "proposalId",
         type: "uint256",
       },
     ],

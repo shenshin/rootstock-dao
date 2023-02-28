@@ -35,11 +35,12 @@ function Propose() {
       // create a new proposal
       const { governor } = getContracts(provider!);
       // regular `propose` method
-      const tx = await governor.propose(
+      const tx = await governor.createProposal(
         addresses,
         amounts,
         calldatas,
         description,
+        ProposalType.Simple,
       );
       setLoading(`Sending proposal creation transaction`);
       await tx.wait();

@@ -62,11 +62,12 @@ function CompetitionProposal() {
         ]),
       ];
       // upgraded proposal creation method
-      const tx = await governor.proposeBallot(
+      const tx = await governor.createProposal(
         addresses,
         amounts,
         calldatas,
         description,
+        ProposalType.Ballot,
       );
       setLoading(`Creating new competition`);
       await tx.wait();

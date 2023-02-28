@@ -53,7 +53,6 @@ export interface GovernorCountingUniversalInterface extends utils.Interface {
     "proposalVotes(uint256,uint8)": FunctionFragment;
     "proposalVotes(uint256)": FunctionFragment;
     "propose(address[],uint256[],bytes[],string)": FunctionFragment;
-    "proposeBallot(address[],uint256[],bytes[],string)": FunctionFragment;
     "quorum(uint256)": FunctionFragment;
     "relay(address,uint256,bytes)": FunctionFragment;
     "state(uint256)": FunctionFragment;
@@ -88,7 +87,6 @@ export interface GovernorCountingUniversalInterface extends utils.Interface {
       | "proposalVotes(uint256,uint8)"
       | "proposalVotes(uint256)"
       | "propose"
-      | "proposeBallot"
       | "quorum"
       | "relay"
       | "state"
@@ -247,15 +245,6 @@ export interface GovernorCountingUniversalInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "proposeBallot",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<string>
-    ]
-  ): string;
-  encodeFunctionData(
     functionFragment: "quorum",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
@@ -359,10 +348,6 @@ export interface GovernorCountingUniversalInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "propose", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "proposeBallot",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "quorum", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "relay", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "state", data: BytesLike): Result;
@@ -626,9 +611,9 @@ export interface GovernorCountingUniversal extends BaseContract {
 
     "proposalVotes(uint256,uint8)"(
       proposalId: PromiseOrValue<BigNumberish>,
-      candidate: PromiseOrValue<BigNumberish>,
+      teams: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[BigNumber] & { candidateVotes: BigNumber }>;
+    ): Promise<[BigNumber[]] & { votes: BigNumber[] }>;
 
     "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
@@ -642,14 +627,6 @@ export interface GovernorCountingUniversal extends BaseContract {
     >;
 
     propose(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      description: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    proposeBallot(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
       calldatas: PromiseOrValue<BytesLike>[],
@@ -810,9 +787,9 @@ export interface GovernorCountingUniversal extends BaseContract {
 
   "proposalVotes(uint256,uint8)"(
     proposalId: PromiseOrValue<BigNumberish>,
-    candidate: PromiseOrValue<BigNumberish>,
+    teams: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  ): Promise<BigNumber[]>;
 
   "proposalVotes(uint256)"(
     proposalId: PromiseOrValue<BigNumberish>,
@@ -826,14 +803,6 @@ export interface GovernorCountingUniversal extends BaseContract {
   >;
 
   propose(
-    targets: PromiseOrValue<string>[],
-    values: PromiseOrValue<BigNumberish>[],
-    calldatas: PromiseOrValue<BytesLike>[],
-    description: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  proposeBallot(
     targets: PromiseOrValue<string>[],
     values: PromiseOrValue<BigNumberish>[],
     calldatas: PromiseOrValue<BytesLike>[],
@@ -994,9 +963,9 @@ export interface GovernorCountingUniversal extends BaseContract {
 
     "proposalVotes(uint256,uint8)"(
       proposalId: PromiseOrValue<BigNumberish>,
-      candidate: PromiseOrValue<BigNumberish>,
+      teams: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<BigNumber[]>;
 
     "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
@@ -1010,14 +979,6 @@ export interface GovernorCountingUniversal extends BaseContract {
     >;
 
     propose(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      description: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proposeBallot(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
       calldatas: PromiseOrValue<BytesLike>[],
@@ -1242,7 +1203,7 @@ export interface GovernorCountingUniversal extends BaseContract {
 
     "proposalVotes(uint256,uint8)"(
       proposalId: PromiseOrValue<BigNumberish>,
-      candidate: PromiseOrValue<BigNumberish>,
+      teams: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1252,14 +1213,6 @@ export interface GovernorCountingUniversal extends BaseContract {
     ): Promise<BigNumber>;
 
     propose(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      description: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    proposeBallot(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
       calldatas: PromiseOrValue<BytesLike>[],
@@ -1423,7 +1376,7 @@ export interface GovernorCountingUniversal extends BaseContract {
 
     "proposalVotes(uint256,uint8)"(
       proposalId: PromiseOrValue<BigNumberish>,
-      candidate: PromiseOrValue<BigNumberish>,
+      teams: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1433,14 +1386,6 @@ export interface GovernorCountingUniversal extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     propose(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      description: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    proposeBallot(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
       calldatas: PromiseOrValue<BytesLike>[],
