@@ -23,8 +23,8 @@ contract RootstockGovernor is
     GovernorVotesQuorumFraction(6)
   {}
 
-  // proposal description hash => proposal ID
-  mapping(bytes32 => uint256) public proposalIds;
+  // proposal description => proposal ID association
+  mapping(uint256 => uint256) public proposalIds;
 
   function createProposal(
     address[] memory targets,
@@ -42,7 +42,12 @@ contract RootstockGovernor is
       revert('RootstockGovernor: unknown voting type');
     }
     // associate proposal description with proposal ID
-    proposalIds[keccak256(abi.encodePacked(description))] = proposalId;
+    uint256 descriptionHash = uint256(keccak256(abi.encodePacked(description)));
+    require(
+      proposalIds[descriptionHash] == 0,
+      'RootstockGovernor: Proposal description should be unique'
+    );
+    proposalIds[descriptionHash] = proposalId;
   }
 
   // The following functions are overrides required by Solidity.
