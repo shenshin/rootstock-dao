@@ -23,6 +23,33 @@ contract RootstockGovernor is
     GovernorVotesQuorumFraction(6)
   {}
 
+  // proposal description => proposal ID association
+  mapping(uint256 => uint256) public proposalIds;
+
+  function createProposal(
+    address[] memory targets,
+    uint256[] memory values,
+    bytes[] memory calldatas,
+    string memory description,
+    CountingType countingType
+  ) external {
+    uint256 proposalId;
+    if (countingType == CountingType.Simple) {
+      proposalId = propose(targets, values, calldatas, description);
+    } else if (countingType == CountingType.Ballot) {
+      proposalId = proposeBallot(targets, values, calldatas, description);
+    } else {
+      revert('RootstockGovernor: unknown voting type');
+    }
+    // associate proposal description with proposal ID
+    uint256 descriptionHash = uint256(keccak256(abi.encodePacked(description)));
+    require(
+      proposalIds[descriptionHash] == 0,
+      'RootstockGovernor: Proposal description should be unique'
+    );
+    proposalIds[descriptionHash] = proposalId;
+  }
+
   // The following functions are overrides required by Solidity.
 
   function votingDelay()

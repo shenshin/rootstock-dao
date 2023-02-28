@@ -40,8 +40,14 @@ contract Competition is Ownable {
       teams.length > 1 && teams.length <= 250,
       'Competitions: Min 2, max 250 teams are allowed'
     );
-    uint256 proposalId = getProposalId(contestName, teams);
-    Team[][] memory winners = findWinners(proposalId, teams);
+    uint256 proposalId = governor.proposalIds(
+      uint256(keccak256(abi.encodePacked(contestName)))
+    );
+    uint256[] memory votes = governor.proposalVotes(
+      proposalId,
+      uint8(teams.length)
+    );
+    Team[][] memory winners = findWinners(teams, votes);
     // runs 3 times, iterates ranks
     for (uint8 rank = 0; rank < winners.length; rank++) {
       // runs as many times as there are teams in the same rank (1-few)
@@ -58,25 +64,6 @@ contract Competition is Ownable {
     }
   }
 
-  // calculates successful competition ID
-  function getProposalId(
-    string calldata contestName,
-    address[] calldata teams
-  ) private view returns (uint256) {
-    address[] memory targets = new address[](1);
-    targets[0] = address(this);
-    uint256[] memory amounts = new uint256[](1);
-    amounts[0] = 0;
-    bytes[] memory calldatas = new bytes[](1);
-    calldatas[0] = abi.encodeWithSelector(
-      this.onCompetitionEnd.selector,
-      contestName,
-      teams
-    );
-    bytes32 descHash = keccak256(abi.encodePacked(contestName));
-    return governor.hashProposal(targets, amounts, calldatas, descHash);
-  }
-
   /* Finds winning teams.
   Returns a result like:
   [
@@ -89,18 +76,15 @@ contract Competition is Ownable {
   ]
    */
   function findWinners(
-    uint256 proposalId,
-    address[] memory teams
-  ) private view returns (Team[][] memory winners) {
+    address[] memory teams,
+    uint256[] memory votes
+  ) private pure returns (Team[][] memory winners) {
     winners = new Team[][](3);
     winners[0] = new Team[](1); // 1st place
     winners[1] = new Team[](1); // 2nd place
     winners[2] = new Team[](1); // 3rd place
     for (uint8 i = 0; i < teams.length; i++) {
-      Team memory team = Team({
-        addr: teams[i],
-        votes: governor.proposalVotes(proposalId, i + 1)
-      });
+      Team memory team = Team({addr: teams[i], votes: votes[i + 1]});
       if (team.votes == 0) continue;
       if (team.votes > winners[0][winners[0].length - 1].votes) {
         winners[2] = winners[1];
