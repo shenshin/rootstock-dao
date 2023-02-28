@@ -726,7 +726,7 @@ const _abi = [
       },
       {
         internalType: "uint8",
-        name: "teams",
+        name: "numTeams",
         type: "uint8",
       },
     ],

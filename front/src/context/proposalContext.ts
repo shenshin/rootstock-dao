@@ -6,13 +6,18 @@ export enum ProposalType {
   Ballot,
 }
 
+export interface ITeamEntry {
+  address: string;
+  id: number;
+}
+
 export interface IProposal {
   description: string;
   proposalId: BigNumber;
   addresses: string[];
   amounts: BigNumber[];
   calldatas: string[];
-  type: ProposalType;
+  teams?: ITeamEntry[];
 }
 
 export enum ProposalState {

@@ -59,7 +59,6 @@ function Propose() {
           addresses,
           amounts,
           calldatas,
-          type: ProposalType.Simple,
         }),
       );
     } catch (error) {

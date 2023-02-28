@@ -611,7 +611,7 @@ export interface GovernorCountingUniversal extends BaseContract {
 
     "proposalVotes(uint256,uint8)"(
       proposalId: PromiseOrValue<BigNumberish>,
-      teams: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber[]] & { votes: BigNumber[] }>;
 
@@ -787,7 +787,7 @@ export interface GovernorCountingUniversal extends BaseContract {
 
   "proposalVotes(uint256,uint8)"(
     proposalId: PromiseOrValue<BigNumberish>,
-    teams: PromiseOrValue<BigNumberish>,
+    numTeams: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<BigNumber[]>;
 
@@ -963,7 +963,7 @@ export interface GovernorCountingUniversal extends BaseContract {
 
     "proposalVotes(uint256,uint8)"(
       proposalId: PromiseOrValue<BigNumberish>,
-      teams: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber[]>;
 
@@ -1203,7 +1203,7 @@ export interface GovernorCountingUniversal extends BaseContract {
 
     "proposalVotes(uint256,uint8)"(
       proposalId: PromiseOrValue<BigNumberish>,
-      teams: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1376,7 +1376,7 @@ export interface GovernorCountingUniversal extends BaseContract {
 
     "proposalVotes(uint256,uint8)"(
       proposalId: PromiseOrValue<BigNumberish>,
-      teams: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

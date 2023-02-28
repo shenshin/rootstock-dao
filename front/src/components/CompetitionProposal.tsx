@@ -4,16 +4,13 @@ import { Web3Context } from '../context/web3Context';
 import {
   ProposalContext,
   getProposalId,
+  ITeamEntry,
   ProposalType,
 } from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 import deployedCompetition from '../contracts/Competition.rsktestnet.address.json';
 import './CompetitionProposal.css';
 
-interface ITeamEntry {
-  address: string;
-  id: number;
-}
 const teamAddresses: ITeamEntry[] = [
   {
     address: '0xB62BD53308fb2834b3114a5f725D0382CBe9f008',
@@ -61,7 +58,6 @@ function CompetitionProposal() {
           teams.map((a) => a.address),
         ]),
       ];
-      // upgraded proposal creation method
       const tx = await governor.createProposal(
         addresses,
         amounts,
@@ -87,7 +83,7 @@ function CompetitionProposal() {
           addresses,
           amounts,
           calldatas,
-          type: ProposalType.Ballot,
+          teams,
         }),
       );
     } catch (error) {
