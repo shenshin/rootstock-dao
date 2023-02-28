@@ -42,7 +42,12 @@ contract RootstockGovernor is
       revert('RootstockGovernor: unknown voting type');
     }
     // associate proposal description with proposal ID
-    proposalIds[uint256(keccak256(abi.encodePacked(description)))] = proposalId;
+    uint256 descriptionHash = uint256(keccak256(abi.encodePacked(description)));
+    require(
+      proposalIds[descriptionHash] == 0,
+      'RootstockGovernor: Proposal description should be unique'
+    );
+    proposalIds[descriptionHash] = proposalId;
   }
 
   // The following functions are overrides required by Solidity.
