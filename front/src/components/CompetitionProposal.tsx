@@ -11,6 +11,9 @@ import getContracts from '../contracts/getContracts';
 import deployedCompetition from '../contracts/Competition.rsktestnet.address.json';
 import './CompetitionProposal.css';
 
+/* 
+These are hardcoded dummy addresses for testing purposes. Replace them with your own or remove
+*/
 const teamAddresses: ITeamEntry[] = [
   {
     address: '0xB62BD53308fb2834b3114a5f725D0382CBe9f008',
