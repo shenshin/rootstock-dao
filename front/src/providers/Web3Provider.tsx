@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { ethers } from 'ethers';
 import { Web3Context, IWeb3Context } from '../context/web3Context';
 
-interface Web3ProviderProps {
-  children: React.ReactNode;
-}
-function Web3Provider({ children }: Web3ProviderProps) {
+function Web3Provider({ children }: { children: React.ReactNode }) {
   const [provider, setProvider] = useState<ethers.providers.Web3Provider>();
   const [address, setAddress] = useState<string>('');
   const [chainError, setChainError] = useState<string>('');

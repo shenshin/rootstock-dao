@@ -18,7 +18,7 @@ contract RootstockGovernor is
     IVotes _token
   )
     Governor('RootstockGovernor')
-    GovernorSettings(1 /* 1 block */, 20 /* 10 minutes */, 0)
+    GovernorSettings(1 /* 1 block */, 10 /* 5 minutes */, 0)
     GovernorVotes(_token)
     GovernorVotesQuorumFraction(6)
   {}

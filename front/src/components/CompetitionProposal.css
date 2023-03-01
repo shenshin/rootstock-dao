@@ -1,0 +1,9 @@
+.competition-btn-container {
+  display: flex;
+}
+.add-remove-btn-container {
+  margin-left: 5rem;
+}
+.add-remove-btn-container > button {
+  width: 2rem;
+}

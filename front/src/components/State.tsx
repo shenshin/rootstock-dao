@@ -1,10 +1,6 @@
 import { useContext, useState, useEffect } from 'react';
 import { Web3Context } from '../context/web3Context';
-import {
-  ProposalContext,
-  ProposalState,
-  getProposalId,
-} from '../context/proposalContext';
+import { ProposalContext, ProposalState } from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 
 function State() {
@@ -15,12 +11,16 @@ function State() {
 
   const getProposalState = async () => {
     const { governor } = getContracts(provider!);
-    const proposalId = getProposalId(proposals[proposalIndex]);
+    const { proposalId } = proposals[proposalIndex];
     const stateCode = await governor.state(proposalId);
     setProposalState(ProposalState[stateCode]);
   };
 
-  useEffect(() => setProposalState('?'), [proposalIndex]);
+  useEffect(() => {
+    if (proposals.length === 0) return;
+    getProposalState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proposalIndex, proposals]);
 
   return (
     <div>
@@ -47,7 +47,7 @@ function State() {
             </div>
             <h3>State: {proposalState}</h3>
             <button type="button" onClick={getProposalState}>
-              Get state
+              Update state
             </button>
           </>
         )}

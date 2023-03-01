@@ -38,6 +38,7 @@ export interface RootstockGovernorInterface extends utils.Interface {
     "castVoteWithReason(uint256,uint8,string)": FunctionFragment;
     "castVoteWithReasonAndParams(uint256,uint8,string,bytes)": FunctionFragment;
     "castVoteWithReasonAndParamsBySig(uint256,uint8,string,bytes,uint8,bytes32,bytes32)": FunctionFragment;
+    "createProposal(address[],uint256[],bytes[],string,uint8)": FunctionFragment;
     "execute(address[],uint256[],bytes[],bytes32)": FunctionFragment;
     "getVotes(address,uint256)": FunctionFragment;
     "getVotesWithParams(address,uint256,bytes)": FunctionFragment;
@@ -48,8 +49,10 @@ export interface RootstockGovernorInterface extends utils.Interface {
     "onERC1155Received(address,address,uint256,uint256,bytes)": FunctionFragment;
     "onERC721Received(address,address,uint256,bytes)": FunctionFragment;
     "proposalDeadline(uint256)": FunctionFragment;
+    "proposalIds(uint256)": FunctionFragment;
     "proposalSnapshot(uint256)": FunctionFragment;
     "proposalThreshold()": FunctionFragment;
+    "proposalVotes(uint256,uint8)": FunctionFragment;
     "proposalVotes(uint256)": FunctionFragment;
     "propose(address[],uint256[],bytes[],string)": FunctionFragment;
     "quorum(uint256)": FunctionFragment;
@@ -79,6 +82,7 @@ export interface RootstockGovernorInterface extends utils.Interface {
       | "castVoteWithReason"
       | "castVoteWithReasonAndParams"
       | "castVoteWithReasonAndParamsBySig"
+      | "createProposal"
       | "execute"
       | "getVotes"
       | "getVotesWithParams"
@@ -89,9 +93,11 @@ export interface RootstockGovernorInterface extends utils.Interface {
       | "onERC1155Received"
       | "onERC721Received"
       | "proposalDeadline"
+      | "proposalIds"
       | "proposalSnapshot"
       | "proposalThreshold"
-      | "proposalVotes"
+      | "proposalVotes(uint256,uint8)"
+      | "proposalVotes(uint256)"
       | "propose"
       | "quorum"
       | "quorumDenominator"
@@ -166,6 +172,16 @@ export interface RootstockGovernorInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "createProposal",
+    values: [
+      PromiseOrValue<string>[],
+      PromiseOrValue<BigNumberish>[],
+      PromiseOrValue<BytesLike>[],
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "execute",
     values: [
       PromiseOrValue<string>[],
@@ -234,6 +250,10 @@ export interface RootstockGovernorInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "proposalIds",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "proposalSnapshot",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
@@ -242,7 +262,11 @@ export interface RootstockGovernorInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "proposalVotes",
+    functionFragment: "proposalVotes(uint256,uint8)",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "proposalVotes(uint256)",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -342,6 +366,10 @@ export interface RootstockGovernorInterface extends utils.Interface {
     functionFragment: "castVoteWithReasonAndParamsBySig",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "createProposal",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getVotes", data: BytesLike): Result;
   decodeFunctionResult(
@@ -371,6 +399,10 @@ export interface RootstockGovernorInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "proposalIds",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "proposalSnapshot",
     data: BytesLike
   ): Result;
@@ -379,7 +411,11 @@ export interface RootstockGovernorInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "proposalVotes",
+    functionFragment: "proposalVotes(uint256,uint8)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "proposalVotes(uint256)",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "propose", data: BytesLike): Result;
@@ -652,6 +688,15 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    createProposal(
+      targets: PromiseOrValue<string>[],
+      values: PromiseOrValue<BigNumberish>[],
+      calldatas: PromiseOrValue<BytesLike>[],
+      description: PromiseOrValue<string>,
+      countingType: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     execute(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
@@ -720,6 +765,11 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    proposalIds(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     proposalSnapshot(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -727,7 +777,13 @@ export interface RootstockGovernor extends BaseContract {
 
     proposalThreshold(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    proposalVotes(
+    "proposalVotes(uint256,uint8)"(
+      proposalId: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber[]] & { votes: BigNumber[] }>;
+
+    "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
@@ -853,6 +909,15 @@ export interface RootstockGovernor extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  createProposal(
+    targets: PromiseOrValue<string>[],
+    values: PromiseOrValue<BigNumberish>[],
+    calldatas: PromiseOrValue<BytesLike>[],
+    description: PromiseOrValue<string>,
+    countingType: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   execute(
     targets: PromiseOrValue<string>[],
     values: PromiseOrValue<BigNumberish>[],
@@ -921,6 +986,11 @@ export interface RootstockGovernor extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  proposalIds(
+    arg0: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   proposalSnapshot(
     proposalId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
@@ -928,7 +998,13 @@ export interface RootstockGovernor extends BaseContract {
 
   proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
-  proposalVotes(
+  "proposalVotes(uint256,uint8)"(
+    proposalId: PromiseOrValue<BigNumberish>,
+    numTeams: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber[]>;
+
+  "proposalVotes(uint256)"(
     proposalId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<
@@ -1054,6 +1130,15 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    createProposal(
+      targets: PromiseOrValue<string>[],
+      values: PromiseOrValue<BigNumberish>[],
+      calldatas: PromiseOrValue<BytesLike>[],
+      description: PromiseOrValue<string>,
+      countingType: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     execute(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
@@ -1122,6 +1207,11 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    proposalIds(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     proposalSnapshot(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1129,7 +1219,13 @@ export interface RootstockGovernor extends BaseContract {
 
     proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
-    proposalVotes(
+    "proposalVotes(uint256,uint8)"(
+      proposalId: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber[]>;
+
+    "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
@@ -1355,6 +1451,15 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    createProposal(
+      targets: PromiseOrValue<string>[],
+      values: PromiseOrValue<BigNumberish>[],
+      calldatas: PromiseOrValue<BytesLike>[],
+      description: PromiseOrValue<string>,
+      countingType: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     execute(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
@@ -1423,6 +1528,11 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    proposalIds(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     proposalSnapshot(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1430,7 +1540,13 @@ export interface RootstockGovernor extends BaseContract {
 
     proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
-    proposalVotes(
+    "proposalVotes(uint256,uint8)"(
+      proposalId: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1553,6 +1669,15 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    createProposal(
+      targets: PromiseOrValue<string>[],
+      values: PromiseOrValue<BigNumberish>[],
+      calldatas: PromiseOrValue<BytesLike>[],
+      description: PromiseOrValue<string>,
+      countingType: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     execute(
       targets: PromiseOrValue<string>[],
       values: PromiseOrValue<BigNumberish>[],
@@ -1621,6 +1746,11 @@ export interface RootstockGovernor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    proposalIds(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     proposalSnapshot(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1628,7 +1758,13 @@ export interface RootstockGovernor extends BaseContract {
 
     proposalThreshold(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    proposalVotes(
+    "proposalVotes(uint256,uint8)"(
+      proposalId: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

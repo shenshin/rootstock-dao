@@ -4,14 +4,22 @@ import {
   VoteToken,
   RootstockGovernor__factory,
   RootstockGovernor,
+  Competition__factory,
+  Competition,
+  Awards__factory,
+  Awards,
 } from './typechain-types';
 
 import voteTokenDeployed from './VoteToken.rsktestnet.address.json';
 import governorDeployed from './RootstockGovernor.rsktestnet.address.json';
+import competitionDeployed from './Competition.rsktestnet.address.json';
+import awardsDeployed from './Awards.rsktestnet.address.json';
 
 export interface Contracts {
   voteToken: VoteToken;
   governor: RootstockGovernor;
+  competition: Competition;
+  awards: Awards;
 }
 
 // eslint-disable-next-line prettier/prettier
@@ -28,7 +36,17 @@ export function getContracts(
     RootstockGovernor__factory.abi,
     provider.getSigner(0),
   ) as RootstockGovernor;
-  return { voteToken, governor };
+  const competition = new ethers.Contract(
+    competitionDeployed.address.toLowerCase(),
+    Competition__factory.abi,
+    provider.getSigner(0),
+  ) as Competition;
+  const awards = new ethers.Contract(
+    awardsDeployed.address.toLowerCase(),
+    Awards__factory.abi,
+    provider.getSigner(0),
+  ) as Awards;
+  return { voteToken, governor, competition, awards };
 }
 
 export default getContracts;

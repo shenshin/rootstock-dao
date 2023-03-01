@@ -26,9 +26,9 @@ import type {
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from "../../../../common";
+} from "../common";
 
-export interface GovernorCountingSimpleInterface extends utils.Interface {
+export interface GovernorCountingUniversalInterface extends utils.Interface {
   functions: {
     "BALLOT_TYPEHASH()": FunctionFragment;
     "COUNTING_MODE()": FunctionFragment;
@@ -50,6 +50,7 @@ export interface GovernorCountingSimpleInterface extends utils.Interface {
     "proposalDeadline(uint256)": FunctionFragment;
     "proposalSnapshot(uint256)": FunctionFragment;
     "proposalThreshold()": FunctionFragment;
+    "proposalVotes(uint256,uint8)": FunctionFragment;
     "proposalVotes(uint256)": FunctionFragment;
     "propose(address[],uint256[],bytes[],string)": FunctionFragment;
     "quorum(uint256)": FunctionFragment;
@@ -83,7 +84,8 @@ export interface GovernorCountingSimpleInterface extends utils.Interface {
       | "proposalDeadline"
       | "proposalSnapshot"
       | "proposalThreshold"
-      | "proposalVotes"
+      | "proposalVotes(uint256,uint8)"
+      | "proposalVotes(uint256)"
       | "propose"
       | "quorum"
       | "relay"
@@ -226,7 +228,11 @@ export interface GovernorCountingSimpleInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "proposalVotes",
+    functionFragment: "proposalVotes(uint256,uint8)",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "proposalVotes(uint256)",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -334,7 +340,11 @@ export interface GovernorCountingSimpleInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "proposalVotes",
+    functionFragment: "proposalVotes(uint256,uint8)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "proposalVotes(uint256)",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "propose", data: BytesLike): Result;
@@ -450,12 +460,12 @@ export type VoteCastWithParamsEvent = TypedEvent<
 export type VoteCastWithParamsEventFilter =
   TypedEventFilter<VoteCastWithParamsEvent>;
 
-export interface GovernorCountingSimple extends BaseContract {
+export interface GovernorCountingUniversal extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: GovernorCountingSimpleInterface;
+  interface: GovernorCountingUniversalInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -599,7 +609,13 @@ export interface GovernorCountingSimple extends BaseContract {
 
     proposalThreshold(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    proposalVotes(
+    "proposalVotes(uint256,uint8)"(
+      proposalId: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber[]] & { votes: BigNumber[] }>;
+
+    "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
@@ -769,7 +785,13 @@ export interface GovernorCountingSimple extends BaseContract {
 
   proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
-  proposalVotes(
+  "proposalVotes(uint256,uint8)"(
+    proposalId: PromiseOrValue<BigNumberish>,
+    numTeams: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber[]>;
+
+  "proposalVotes(uint256)"(
     proposalId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<
@@ -939,7 +961,13 @@ export interface GovernorCountingSimple extends BaseContract {
 
     proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
-    proposalVotes(
+    "proposalVotes(uint256,uint8)"(
+      proposalId: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber[]>;
+
+    "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
@@ -1173,7 +1201,13 @@ export interface GovernorCountingSimple extends BaseContract {
 
     proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
 
-    proposalVotes(
+    "proposalVotes(uint256,uint8)"(
+      proposalId: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1340,7 +1374,13 @@ export interface GovernorCountingSimple extends BaseContract {
 
     proposalThreshold(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    proposalVotes(
+    "proposalVotes(uint256,uint8)"(
+      proposalId: PromiseOrValue<BigNumberish>,
+      numTeams: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "proposalVotes(uint256)"(
       proposalId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

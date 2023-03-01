@@ -1,9 +1,13 @@
 import { useContext, useState } from 'react';
 import { utils } from 'ethers';
 import { Web3Context } from '../context/web3Context';
-import { ProposalContext } from '../context/proposalContext';
+import {
+  ProposalContext,
+  getProposalId,
+  ProposalType,
+} from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
-import './Propose.css';
+import './RbtcTransferProposal.css';
 
 function Propose() {
   const { address, provider } = useContext(Web3Context);
@@ -30,20 +34,33 @@ function Propose() {
       const calldatas: string[] = ['0x']; // empty calldata
       // create a new proposal
       const { governor } = getContracts(provider!);
-      const tx = await governor.propose(
+      // regular `propose` method
+      const tx = await governor.createProposal(
         addresses,
         amounts,
         calldatas,
         description,
+        ProposalType.Simple,
       );
       setLoading(`Sending proposal creation transaction`);
       await tx.wait();
       setLoading(`Proposal was created`);
       // save created proposal to context
-      setProposals((old) => [
-        ...old,
-        { addresses, amounts, calldatas, description },
-      ]);
+      const proposalId = getProposalId(
+        addresses,
+        amounts,
+        calldatas,
+        description,
+      );
+      setProposals((old) =>
+        old.concat({
+          description,
+          proposalId,
+          addresses,
+          amounts,
+          calldatas,
+        }),
+      );
     } catch (error) {
       if (error instanceof Error) setErrorMessage(error.message);
     }
@@ -51,7 +68,7 @@ function Propose() {
 
   return (
     <div>
-      <h1>Proposal creation</h1>
+      <h1>Create RBTC transfer proposal</h1>
       <p>The proposal is to send some RBTC to a target address</p>
       <label className="proposal-param" htmlFor="target-addr">
         Target address

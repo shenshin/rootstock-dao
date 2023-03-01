@@ -4,10 +4,11 @@ import Web3Context from './context/web3Context';
 import Navigation from './components/Navigation';
 import Connect from './components/Connect';
 import Delegate from './components/Delegate';
-import Propose from './components/Propose';
+import RbtcTransferProposal from './components/RbtcTransferProposal';
 import Vote from './components/Vote';
 import State from './components/State';
 import Execute from './components/Execute';
+import CompetitionProposal from './components/CompetitionProposal';
 import './App.css';
 
 function App() {
@@ -24,9 +25,13 @@ function App() {
     <div className="app-container">
       <Navigation />
       <Routes>
-        <Route path="*" element={<Navigate to="propose" />} />
+        <Route path="*" element={<Navigate to="delegate" />} />
         <Route path="delegate" element={<Delegate />} />
-        <Route path="propose" element={<Propose />} />
+        <Route
+          path="propose-rbtc-transfer"
+          element={<RbtcTransferProposal />}
+        />
+        <Route path="propose-competition" element={<CompetitionProposal />} />
         <Route path="vote" element={<Vote />} />
         <Route path="state" element={<State />} />
         <Route path="execute" element={<Execute />} />

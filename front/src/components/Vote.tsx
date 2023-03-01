@@ -1,10 +1,6 @@
 import { useContext, useState } from 'react';
 import { Web3Context } from '../context/web3Context';
-import {
-  ProposalContext,
-  ProposalState,
-  getProposalId,
-} from '../context/proposalContext';
+import { ProposalContext, ProposalState } from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 
 enum VoteOptions {
@@ -25,7 +21,7 @@ function Vote() {
     try {
       setErrorMessage('');
       const { governor } = getContracts(provider!);
-      const proposalId = getProposalId(proposals[proposalIndex]);
+      const { proposalId } = proposals[proposalIndex];
       if ((await governor.state(proposalId)) !== ProposalState.Active)
         throw new Error(`You cannot vote for this proposal`);
       const tx = await governor.castVote(proposalId, voteIndex);
@@ -47,7 +43,7 @@ function Vote() {
           <>
             <div>
               <label htmlFor="select-proposal">
-                Proposal{' '}
+                Select proposal
                 <select
                   onChange={(e) => setProposalIndex(+e.target.value)}
                   name="select-proposal"
@@ -62,15 +58,25 @@ function Vote() {
             </div>
             <div>
               <label htmlFor="vote">
-                Vote{' '}
+                {proposals[proposalIndex]?.teams ? (
+                  <p>Competition. Select team </p>
+                ) : (
+                  <p>Vote for proposal </p>
+                )}
                 <select onChange={(e) => setVoteIndex(+e.target.value)}>
-                  {Object.values(VoteOptions)
-                    .filter((option) => typeof option === 'string')
-                    .map((option, i) => (
-                      <option value={i} key={option}>
-                        {option}
-                      </option>
-                    ))}
+                  {proposals[proposalIndex]?.teams
+                    ? proposals[proposalIndex].teams?.map((team, i) => (
+                        <option value={i + 1} key={team.id}>
+                          {`${i + 1}: ${team.address}`}
+                        </option>
+                      ))
+                    : Object.values(VoteOptions)
+                        .filter((option) => typeof option === 'string')
+                        .map((option, i) => (
+                          <option value={i} key={option}>
+                            {option}
+                          </option>
+                        ))}
                 </select>
               </label>
             </div>

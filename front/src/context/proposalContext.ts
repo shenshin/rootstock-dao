@@ -1,11 +1,23 @@
 import { createContext } from 'react';
 import { ethers, BigNumber } from 'ethers';
 
+export enum ProposalType {
+  Simple,
+  Ballot,
+}
+
+export interface ITeamEntry {
+  address: string;
+  id: number;
+}
+
 export interface IProposal {
+  description: string;
+  proposalId: BigNumber;
   addresses: string[];
   amounts: BigNumber[];
   calldatas: string[];
-  description: string;
+  teams?: ITeamEntry[];
 }
 
 export enum ProposalState {
@@ -19,8 +31,12 @@ export enum ProposalState {
   Executed,
 }
 
-export function getProposalId(proposal: IProposal): BigNumber {
-  const { addresses, amounts, calldatas, description } = proposal;
+export function getProposalId(
+  addresses: string[],
+  amounts: BigNumber[],
+  calldatas: string[],
+  description: string,
+): BigNumber {
   const descHash = ethers.utils.solidityKeccak256(['string'], [description]);
   return BigNumber.from(
     ethers.utils.keccak256(
@@ -33,8 +49,8 @@ export function getProposalId(proposal: IProposal): BigNumber {
 }
 
 export interface IProposalContext {
-  proposals: IProposal[];
-  setProposals: React.Dispatch<React.SetStateAction<IProposal[]>>;
+  proposals: Array<IProposal>;
+  setProposals: React.Dispatch<React.SetStateAction<Array<IProposal>>>;
 }
 
 export const ProposalContext = createContext<IProposalContext>({

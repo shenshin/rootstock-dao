@@ -1,11 +1,7 @@
 import { useContext, useState } from 'react';
 import { utils } from 'ethers';
 import { Web3Context } from '../context/web3Context';
-import {
-  ProposalContext,
-  ProposalState,
-  getProposalId,
-} from '../context/proposalContext';
+import { ProposalContext, ProposalState } from '../context/proposalContext';
 import getContracts from '../contracts/getContracts';
 
 function Execute() {
@@ -18,12 +14,13 @@ function Execute() {
   const executeProposal = async () => {
     try {
       setErrorMessage('');
+      const proposal = proposals[proposalIndex];
       const { governor } = getContracts(provider!);
-      const proposalId = getProposalId(proposals[proposalIndex]);
-      if ((await governor.state(proposalId)) !== ProposalState.Succeeded)
+      if (
+        (await governor.state(proposal.proposalId)) !== ProposalState.Succeeded
+      )
         throw new Error(`Proposal cannot be executed`);
-      const { addresses, amounts, calldatas, description } =
-        proposals[proposalIndex];
+      const { addresses, amounts, calldatas, description } = proposal;
       const descHash = utils.solidityKeccak256(['string'], [description]);
       const tx = await governor.execute(
         addresses,
@@ -31,7 +28,7 @@ function Execute() {
         calldatas,
         descHash,
       );
-      setLoading(`Sending Execute transaction`);
+      setLoading(`Executing proposal ${proposal.description}`);
       await tx.wait();
       setLoading('Proposal was executed');
     } catch (error) {

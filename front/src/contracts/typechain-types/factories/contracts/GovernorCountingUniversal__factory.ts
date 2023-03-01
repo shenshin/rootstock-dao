@@ -5,9 +5,9 @@
 import { Contract, Signer, utils } from "ethers";
 import type { Provider } from "@ethersproject/providers";
 import type {
-  GovernorCountingSimple,
-  GovernorCountingSimpleInterface,
-} from "../../../../../@openzeppelin/contracts/governance/extensions/GovernorCountingSimple";
+  GovernorCountingUniversal,
+  GovernorCountingUniversalInterface,
+} from "../../contracts/GovernorCountingUniversal";
 
 const _abi = [
   {
@@ -724,6 +724,30 @@ const _abi = [
         name: "proposalId",
         type: "uint256",
       },
+      {
+        internalType: "uint8",
+        name: "numTeams",
+        type: "uint8",
+      },
+    ],
+    name: "proposalVotes",
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "votes",
+        type: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "proposalId",
+        type: "uint256",
+      },
     ],
     name: "proposalVotes",
     outputs: [
@@ -905,19 +929,19 @@ const _abi = [
   },
 ] as const;
 
-export class GovernorCountingSimple__factory {
+export class GovernorCountingUniversal__factory {
   static readonly abi = _abi;
-  static createInterface(): GovernorCountingSimpleInterface {
-    return new utils.Interface(_abi) as GovernorCountingSimpleInterface;
+  static createInterface(): GovernorCountingUniversalInterface {
+    return new utils.Interface(_abi) as GovernorCountingUniversalInterface;
   }
   static connect(
     address: string,
     signerOrProvider: Signer | Provider
-  ): GovernorCountingSimple {
+  ): GovernorCountingUniversal {
     return new Contract(
       address,
       _abi,
       signerOrProvider
-    ) as GovernorCountingSimple;
+    ) as GovernorCountingUniversal;
   }
 }
